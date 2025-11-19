@@ -102,19 +102,33 @@ const MessageHandlers = {
 		let rm = sock.user.gameRoom;
 		rm.startNewRound();
 		broadcastRoomState(io, rm, MESSAGE.START_GAME);
-	},
+        },
 
-	[MESSAGE.SUBMIT_STROKE](io, sock, data) {
-		GamePrecond.sockHasUser(sock);
-		GamePrecond.userIsInARoom(sock.user);
+        [MESSAGE.SUBMIT_STROKE](io, sock, data) {
+                GamePrecond.sockHasUser(sock);
+                GamePrecond.userIsInARoom(sock.user);
 		GamePrecond.gameInProgress(sock.user.gameRoom);
 		GamePrecond.isUsersTurn(sock.user);
 		let rm = sock.user.gameRoom;
 		rm.addStroke(sock.user.name, data.points);
 		rm.nextTurn();
 
-		broadcastRoomState(io, rm, MESSAGE.NEW_TURN);
-	},
+                broadcastRoomState(io, rm, MESSAGE.NEW_TURN);
+        },
+
+        [MESSAGE.SUBMIT_VOTE](io, sock, data) {
+                GamePrecond.sockHasUser(sock);
+                GamePrecond.userIsInARoom(sock.user);
+                let rm = sock.user.gameRoom;
+
+                if (rm.phase !== GAME_PHASE.VOTE) {
+                        throw new GameError('Voting is not active right now.');
+                }
+
+                rm.submitVote(sock.user.name, data.targetUser);
+
+                broadcastRoomState(io, rm, MESSAGE.SUBMIT_VOTE);
+        },
 
 	[MESSAGE.RETURN_TO_SETUP](io, sock, data) {
 		GamePrecond.sockHasUser(sock);
@@ -215,16 +229,26 @@ function broadcastRoomState(io, room, messageName, addtlProcessFn) {
 			continue;
 		}
 
-		let res;
-		if (room.phase === GAME_PHASE.PLAY || room.phase === GAME_PHASE.VOTE) {
-			res = {
-				roomState: room.faker && room.faker.name === u.name ? fakerView : artistView,
-			};
-		} else {
-			res = {
-				roomState: state,
-			};
-		}
+                let res;
+                if (room.phase === GAME_PHASE.PLAY) {
+                        res = {
+                                roomState: room.faker && room.faker.name === u.name ? fakerView : artistView,
+                        };
+                } else if (room.phase === GAME_PHASE.VOTE) {
+                        if (room.isVoteComplete()) {
+                                res = {
+                                        roomState: room.faker && room.faker.name === u.name ? fakerView : state,
+                                };
+                        } else {
+                                res = {
+                                        roomState: room.faker && room.faker.name === u.name ? fakerView : artistView,
+                                };
+                        }
+                } else {
+                        res = {
+                                roomState: state,
+                        };
+                }
 
 		s.emit(messageName, res);
 	}

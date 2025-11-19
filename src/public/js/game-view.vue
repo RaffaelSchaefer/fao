@@ -55,12 +55,12 @@
 					<canvas id="old-paint"></canvas>
 				</div>
 			</div>
-			<div id="drawing-actions" class="stripe flex-center">
-				<div class="stripe-content flex-center canvas-aligned">
-					<div id="drawing-actions-right" class="fill-space"></div>
-					<div id="drawing-actions-center">
-						<button
-							class="btn primary big"
+                        <div id="drawing-actions" class="stripe flex-center">
+                                <div class="stripe-content flex-center canvas-aligned">
+                                        <div id="drawing-actions-right" class="fill-space"></div>
+                                        <div id="drawing-actions-center">
+                                                <button
+                                                        class="btn primary big"
 							@click="nextRound"
 							v-show="isRoundOver"
 							:disabled="!isRoundOver"
@@ -85,15 +85,20 @@
 						</button>
 					</div>
 					<div id="drawing-actions-left" class="fill-space">
-						<game-menu :items="menuItems"></game-menu>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div
-			id="side-player-statuses"
-			v-if="playerStatusesListMaxWidth > 0"
-			:style="{
+                                                <game-menu :items="menuItems"></game-menu>
+                                        </div>
+                                </div>
+                        </div>
+                        <vote-panel
+                                v-if="isVotePhase"
+                                :game-state="gameState"
+                                :username="username"
+                        ></vote-panel>
+                </div>
+                <div
+                        id="side-player-statuses"
+                        v-if="playerStatusesListMaxWidth > 0"
+                        :style="{
 				maxWidth: `${playerStatusesListMaxWidth}px`,
 			}"
 		>
@@ -116,6 +121,7 @@ import Confirmation from './confirmation';
 // import VoteDialog from './vote-dialog';
 import drawingPad from './drawing-pad';
 import PlayerStatusesList from './player-statuses-list';
+import VotePanel from './vote-panel.vue';
 
 const CanvasState = {
 	EMPTY: 'EMPTY',
@@ -180,12 +186,13 @@ const SIDE_PLAYER_STATUSES_LIST_MIN_WIDTH = 120;
 export default {
 	name: 'GameView',
 	components: {
-		ConnectionOverlay,
-		GameMenu,
-		RoomInfo,
-		Confirmation,
-		PlayerStatusesList,
-	},
+                ConnectionOverlay,
+                GameMenu,
+                RoomInfo,
+                Confirmation,
+                PlayerStatusesList,
+                VotePanel,
+        },
 	props: {
 		gameConnection: {
 			type: String,
@@ -211,26 +218,35 @@ export default {
 			currentDialog: undefined,
 		};
 	},
-	computed: {
-		promptText() {
-			return `${this.gameState.hint}: ${this.gameState.keyword}`;
-		},
-		whoseTurnText() {
-			return this.gameState.phase === GAME_PHASE.VOTE
-				? 'Time to vote!'
-				: `${this.gameState.whoseTurn}'s turn`;
-		},
-		userColor() {
-			return this.gameState.getUserColor(this.gameState.whoseTurn);
-		},
-		isRoundOver() {
-			return this.gameState.phase === GAME_PHASE.VOTE;
-		},
-		actionsEnabled() {
-			return (
-				this.canvasState === 'PREVIEW' && this.gameConnection === CONNECTION_STATE.CONNECT
-			);
-		},
+        computed: {
+                username() {
+                        return Store.state.username;
+                },
+                promptText() {
+                        return `${this.gameState.hint}: ${this.gameState.keyword}`;
+                },
+                whoseTurnText() {
+                        return this.gameState.phase === GAME_PHASE.VOTE
+                                ? 'Time to vote!'
+                                : `${this.gameState.whoseTurn}'s turn`;
+                },
+                userColor() {
+                        return this.gameState.getUserColor(this.gameState.whoseTurn);
+                },
+                isRoundOver() {
+                        return this.isVotePhase && this.voteComplete;
+                },
+                isVotePhase() {
+                        return this.gameState.phase === GAME_PHASE.VOTE;
+                },
+                voteComplete() {
+                        return Boolean(this.gameState.voteSummary && this.gameState.voteSummary.complete);
+                },
+                actionsEnabled() {
+                        return (
+                                this.canvasState === 'PREVIEW' && this.gameConnection === CONNECTION_STATE.CONNECT
+                        );
+                },
 		roundAndTurn() {
 			return this.gameState.round + '-' + this.gameState.turn;
 		},

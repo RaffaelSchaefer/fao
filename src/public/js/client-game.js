@@ -10,8 +10,15 @@ function generateClientGameState() {
 		whoseTurn: undefined,
 		keyword: undefined,
 		hint: undefined,
-		fakerName: undefined,
-		strokes: [],
+                fakerName: undefined,
+                strokes: [],
+                votes: {},
+                voteSummary: {
+                        complete: false,
+                        remaining: 0,
+                        counts: {},
+                        leaders: [],
+                },
 
 		getUsernames() {
 			return this.users.map((u) => u.name);

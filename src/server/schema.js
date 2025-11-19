@@ -49,10 +49,10 @@ SCHEMA[MESSAGE.START_GAME] = {
 	required: [],
 };
 SCHEMA[MESSAGE.SUBMIT_STROKE] = {
-	$id: MESSAGE.SUBMIT_STROKE,
-	properties: {
-		points: {
-			type: 'array',
+        $id: MESSAGE.SUBMIT_STROKE,
+        properties: {
+                points: {
+                        type: 'array',
 			items: {
 				type: 'object',
 				properties: {
@@ -67,8 +67,19 @@ SCHEMA[MESSAGE.SUBMIT_STROKE] = {
 			},
 			minItems: 2,
 		},
-	},
-	required: ['points'],
+        },
+        required: ['points'],
+};
+SCHEMA[MESSAGE.SUBMIT_VOTE] = {
+        $id: MESSAGE.SUBMIT_VOTE,
+        properties: {
+                targetUser: {
+                        type: 'string',
+                        minLength: usernameMinLength,
+                        maxLength: usernameMaxLength,
+                },
+        },
+        required: ['targetUser'],
 };
 
 for (let schema of Object.values(SCHEMA)) {
