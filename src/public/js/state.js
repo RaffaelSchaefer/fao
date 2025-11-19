@@ -64,16 +64,17 @@ const Store = {
 			this.state.gameState.phase === GAME_PHASE.PLAY
 		);
 	},
-	setWarning(warningName, message) {
-		this.state[warningName] = message;
-	},
-	submitCreateGame,
-	submitJoinGame,
-	submitLeaveGame,
-	submitStartGame,
-	submitStroke,
-	submitNextRound,
-	submitReturnToSetup,
+        setWarning(warningName, message) {
+                this.state[warningName] = message;
+        },
+        submitCreateGame,
+        submitJoinGame,
+        submitLeaveGame,
+        submitStartGame,
+        submitStroke,
+        submitVote,
+        submitNextRound,
+        submitReturnToSetup,
 };
 
 function handleSocket(messageName, handler, errHandler) {
@@ -130,6 +131,7 @@ handleSocket(MESSAGE.LEAVE_ROOM, function(data) {
 handleSocket(MESSAGE.USER_LEFT);
 handleSocket(MESSAGE.START_GAME);
 handleSocket(MESSAGE.NEW_TURN);
+handleSocket(MESSAGE.SUBMIT_VOTE);
 handleSocket(MESSAGE.RETURN_TO_SETUP);
 
 const usernameValidationWarning =
@@ -168,9 +170,14 @@ function submitStartGame() {
 	socket.emit(MESSAGE.START_GAME, {});
 }
 function submitStroke(points) {
-	socket.emit(MESSAGE.SUBMIT_STROKE, {
-		points: points,
-	});
+        socket.emit(MESSAGE.SUBMIT_STROKE, {
+                points: points,
+        });
+}
+function submitVote(targetUser) {
+        socket.emit(MESSAGE.SUBMIT_VOTE, {
+                targetUser,
+        });
 }
 function submitNextRound() {
 	socket.emit(MESSAGE.NEXT_ROUND);

@@ -1,0 +1,168 @@
+:root {
+        --artist3: hsl(322, 90%, 65%);
+        --artist4: hsl(322, 90%, 55%);
+        --artist5: hsl(322, 90%, 45%);
+        --grey0: hsl(220, 40%, 100%);
+        --grey1: hsl(220, 40%, 95%);
+        --grey2: hsl(220, 30%, 85%);
+        --grey3: hsl(220, 30%, 75%);
+        --grey4: hsl(220, 20%, 65%);
+        --grey5: hsl(220, 15%, 55%);
+        --grey6: hsl(220, 15%, 45%);
+        --grey7: hsl(220, 15%, 35%);
+        --blue1: hsl(200, 60%, 75%);
+        --blue2: hsl(200, 60%, 60%);
+        --blue3: hsl(200, 60%, 50%);
+        --blue4: hsl(200, 60%, 40%);
+        --blue5: hsl(200, 60%, 30%);
+}
+
+* {
+        box-sizing: border-box;
+}
+
+body {
+        font-family: 'Quicksand', sans-serif;
+        margin: 0;
+        background: var(--grey0);
+        color: var(--grey7);
+}
+
+#wrapper {
+        min-height: 100vh;
+        background-color: var(--grey0);
+        color: var(--grey6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+}
+
+h1,
+h2,
+h3 {
+        font-family: 'Quicksand', sans-serif;
+        color: var(--grey7);
+}
+
+h2 {
+        font-size: 20px;
+        margin: 5px 5px 10px 5px;
+}
+
+p {
+        margin: 5px;
+}
+
+.normal-text :not(:last-child) {
+        margin-bottom: 10px;
+}
+
+.tinytext {
+        font-size: 12px;
+        font-style: italic;
+}
+
+.stripe {
+        background: #fff;
+        border: 1px solid var(--grey2);
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        width: 100%;
+}
+
+.stripe-content {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 650px;
+}
+
+.btn {
+        font-family: 'Quicksand', sans-serif;
+        letter-spacing: 0.03em;
+        font-size: 16px;
+        font-weight: 700;
+        border-style: solid;
+        border-radius: 5px;
+        border-width: 2px;
+        min-width: 96px;
+        line-height: 40px;
+        padding: 0 16px;
+        margin: 8px;
+        cursor: pointer;
+        transition: all 0.1s ease-in-out;
+}
+
+.btn:disabled {
+        border-color: var(--grey1);
+        background-color: var(--grey0);
+        color: var(--grey3);
+        cursor: default;
+}
+
+.btn.primary:not(:disabled) {
+        background-color: var(--artist4);
+        color: var(--grey0);
+        border-color: var(--artist4);
+}
+
+.btn.secondary:not(:disabled) {
+        background-color: var(--grey0);
+        color: var(--blue4);
+        border-color: var(--blue4);
+}
+
+.btn.secondary:not(:disabled):hover {
+        color: var(--blue3);
+        border-color: var(--blue3);
+}
+
+.btn.secondary:not(:disabled):active {
+        color: var(--blue5);
+        border-color: var(--blue5);
+}
+
+#vote-panel .vote-options {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+}
+
+#vote-panel .vote-options .btn {
+        min-width: 120px;
+        margin: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+}
+
+#vote-panel .vote-option-label {
+        font-weight: 700;
+}
+
+#vote-panel .vote-count {
+        font-size: 13px;
+        color: var(--grey5);
+}
+
+#vote-panel .btn.selected:not(:disabled) {
+        border-color: var(--artist4);
+        color: var(--artist4);
+}
+
+#vote-panel .banner {
+        background: var(--blue1);
+        border: 1px solid var(--blue2);
+        color: var(--blue5);
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin: 12px 0;
+        display: inline-block;
+}
+
+#vote-panel .wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+}

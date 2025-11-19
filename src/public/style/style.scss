@@ -290,18 +290,47 @@ ul.player-statuses-list {
 }
 
 #conn-overlay {
-	background-color: rgba(240, 240, 240, 0.9);
-	height: 100%;
-	width: 100%;
+        background-color: rgba(240, 240, 240, 0.9);
+        height: 100%;
+        width: 100%;
 
 	/* see position and z-idxes for the drawing pad layers */
-	position: absolute;
-	z-index: 3;
+        position: absolute;
+        z-index: 3;
+}
+
+#vote-panel {
+        .vote-options {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+        }
+
+        .vote-options .btn {
+                min-width: 120px;
+                margin: 6px;
+                display: flex;
+                flex-direction: column;
+        }
+
+        .vote-option-label {
+                font-weight: 700;
+        }
+
+        .vote-count {
+                font-size: 13px;
+                color: var(--grey5);
+        }
+
+        .btn.selected:not(:disabled) {
+                border-color: var(--artist4);
+                color: var(--artist4);
+        }
 }
 
 .feather {
-	width: 24px;
-	height: 24px;
+        width: 24px;
+        height: 24px;
 	stroke: currentColor;
 	stroke-width: 2;
 	stroke-linecap: round;
