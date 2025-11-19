@@ -300,13 +300,94 @@ ul.player-statuses-list {
 }
 
 .feather {
-	width: 24px;
-	height: 24px;
-	stroke: currentColor;
-	stroke-width: 2;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-	fill: none;
+        width: 24px;
+        height: 24px;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+}
+
+/* ============================================================================
+        Voting
+============================================================================ */
+.vote-panel {
+        background: var(--grey0);
+        border: 1px solid var(--grey1);
+        border-radius: 12px;
+        box-shadow: var(--shadow-config) var(--shade);
+        padding: 16px;
+        color: var(--grey7);
+
+        .vote-panel__content {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+        }
+
+        .vote-panel__banner {
+                background-color: var(--blue1);
+                color: var(--blue5);
+                border-radius: 8px;
+                padding: 6px 10px;
+                display: inline-block;
+                font-weight: 700;
+        }
+
+        .vote-panel__remaining {
+                color: var(--grey6);
+        }
+
+        .vote-panel__grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 10px;
+        }
+
+        .vote-card {
+                background: white;
+                border: 1px solid var(--grey1);
+                border-radius: 10px;
+                padding: 12px 10px;
+                min-height: 72px;
+                font-family: var(--button-font);
+                font-weight: 700;
+                color: var(--grey6);
+                cursor: pointer;
+                transition: all 0.15s ease;
+
+                &.selected {
+                        border-color: var(--artist4);
+                        box-shadow: var(--shadow-config) var(--artistshade);
+                        color: var(--artist5);
+                }
+
+                &.disabled {
+                        cursor: not-allowed;
+                        opacity: 0.65;
+                }
+
+                &:not(.disabled):hover {
+                        box-shadow: var(--shadow-config) var(--artistshade2);
+                        transform: translateY(-1px);
+                }
+
+                .vote-card__name {
+                        font-size: 18px;
+                        color: var(--grey7);
+                }
+                .vote-card__count {
+                        font-size: 14px;
+                        color: var(--grey5);
+                }
+        }
+
+        .vote-panel__footnote {
+                font-size: 13px;
+                color: var(--grey6);
+                margin: 0;
+        }
 }
 
 @import 'colors';
