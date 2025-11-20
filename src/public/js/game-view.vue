@@ -55,12 +55,12 @@
                                 </div>
                         </div>
                         <div class="stripe flex-center">
-                        <div id="drawing-pad" class="stripe-content">
-                                <connection-overlay :gameConnection="gameConnection"></connection-overlay>
-                                <canvas
-                                        id="new-paint"
-                                        touch-action="none"
-                                        @pointerdown="pdown"
+                                <div id="drawing-pad" class="stripe-content">
+                                        <connection-overlay :gameConnection="gameConnection"></connection-overlay>
+					<canvas
+						id="new-paint"
+						touch-action="none"
+						@pointerdown="pdown"
 						@pointermove="pmove"
 						@pointerup="endStroke"
 						@pointerout="endStroke"
@@ -231,38 +231,22 @@ export default {
 		promptText() {
 			return `${this.gameState.hint}: ${this.gameState.keyword}`;
 		},
-                whoseTurnText() {
-                        return this.gameState.phase === GAME_PHASE.VOTE
-                                ? 'Time to vote!'
-                                : `${this.gameState.whoseTurn}'s turn`;
-                },
-                userColor() {
-                        return this.gameState.getUserColor(this.gameState.whoseTurn);
-                },
-                isDrawingPhase() {
-                        return this.gameState.phase === GAME_PHASE.PLAY;
-                },
-                votingComplete() {
-                        const hasResult = Boolean(this.gameState.voteResult);
-                        if (hasResult) {
-                                return (
-                                        this.gameState.voteResult.votesCast >=
-                                        this.gameState.voteResult.votesRequired
-                                );
-                        }
-                        const votesCast = Object.keys(this.gameState.votes || {}).length;
-                        return votesCast >= (this.gameState.votesRequired || this.gameState.users.length);
-                },
-                canStartNextRound() {
-                        return this.gameState.phase === GAME_PHASE.VOTE && this.votingComplete;
-                },
-                actionsEnabled() {
-                        return (
-                                this.gameState.phase === GAME_PHASE.PLAY &&
-                                this.canvasState === 'PREVIEW' &&
-                                this.gameConnection === CONNECTION_STATE.CONNECT
-                        );
-                },
+		whoseTurnText() {
+			return this.gameState.phase === GAME_PHASE.VOTE
+				? 'Time to vote!'
+				: `${this.gameState.whoseTurn}'s turn`;
+		},
+		userColor() {
+			return this.gameState.getUserColor(this.gameState.whoseTurn);
+		},
+		isRoundOver() {
+			return this.gameState.phase === GAME_PHASE.VOTE;
+		},
+		actionsEnabled() {
+			return (
+				this.canvasState === 'PREVIEW' && this.gameConnection === CONNECTION_STATE.CONNECT
+			);
+		},
                 roundAndTurn() {
                         return this.gameState.round + '-' + this.gameState.turn;
                 },
@@ -412,27 +396,24 @@ export default {
                 rules() {
                         Store.setView(VIEW.RULES);
                 },
-                generateMenuOptions() {
-                        const nextRoundOption =
-                                this.gameState.phase === GAME_PHASE.VOTE
-                                        ? {
-                                                        text: 'New round',
-                                                        action: this.canStartNextRound
-                                                                ? this.nextRound
-                                                                : undefined,
-                                                        disabled: !this.canStartNextRound,
-                                          }
-                                        : {
-                                                        text: 'Skip this round',
-                                                        action: () => {
-                                                                this.showDialog(Dialogs.SKIP_ROUND);
-                                                        },
-                                          };
-                        return [
-                                {
-                                        text: this.promptVisible ? 'Hide prompt' : 'Show prompt',
-                                        action: this.togglePrompt,
-                                },
+		generateMenuOptions() {
+			const nextRoundOption =
+				this.gameState.phase === GAME_PHASE.VOTE
+					? {
+							text: 'New round',
+							action: this.nextRound,
+					  }
+					: {
+							text: 'Skip this round',
+							action: () => {
+								this.showDialog(Dialogs.SKIP_ROUND);
+							},
+					  };
+			return [
+				{
+					text: this.promptVisible ? 'Hide prompt' : 'Show prompt',
+					action: this.togglePrompt,
+				},
 				{
 					text: this.sfxDisabled ? 'Unmute sound' : 'Mute sound',
 					action: this.toggleSfx,
