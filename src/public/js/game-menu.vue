@@ -10,13 +10,19 @@
 		</button>
 		<div id="game-menu-dropdown" class="dropup-content" v-show="expanded === true">
 			<ul class="dropup-list">
-				<div v-for="item in items" :key="item.text">
-					<li v-if="!item.hr" @click="doAction(item)">{{ item.text }}</li>
-					<hr v-if="item.hr" />
-				</div>
-			</ul>
-		</div>
-	</div>
+                                <div v-for="item in items" :key="item.text">
+                                        <li
+                                                v-if="!item.hr"
+                                                :class="{ disabled: item.disabled }"
+                                                @click="doAction(item)"
+                                        >
+                                                {{ item.text }}
+                                        </li>
+                                        <hr v-if="item.hr" />
+                                </div>
+                        </ul>
+                </div>
+        </div>
 </template>
 <script>
 import Store from './state';
@@ -46,12 +52,15 @@ export default {
 		toggleHide() {
 			this.expanded = false;
 		},
-		doAction(item) {
-			if (item.action) {
-				item.action();
-				this.toggleHide();
-			}
-		},
+                doAction(item) {
+                        if (item.disabled) {
+                                return;
+                        }
+                        if (item.action) {
+                                item.action();
+                                this.toggleHide();
+                        }
+                },
 		senseClickOutside(event) {
 			let clickedOutside;
 			if (event.composedPath) {

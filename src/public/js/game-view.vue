@@ -72,30 +72,30 @@
 				<div class="stripe-content flex-center canvas-aligned">
 					<div id="drawing-actions-right" class="fill-space"></div>
 					<div id="drawing-actions-center">
-						<button
-							class="btn primary big"
-							@click="nextRound"
-							v-show="isRoundOver"
-							:disabled="!isRoundOver"
-						>
-							New Round
-						</button>
-						<button
-							class="btn primary submit-drawing"
-							@click="submit"
-							v-show="!isRoundOver"
-							:disabled="!actionsEnabled"
-						>
-							Submit
-						</button>
-						<button
-							class="btn secondary undo-drawing"
-							@click="undo"
-							v-show="!isRoundOver"
-							:disabled="!actionsEnabled"
-						>
-							Undo
-						</button>
+                                        <button
+                                                class="btn primary big"
+                                                @click="nextRound"
+                                                v-show="canStartNextRound"
+                                                :disabled="!canStartNextRound"
+                                        >
+                                                New Round
+                                        </button>
+                                        <button
+                                                class="btn primary submit-drawing"
+                                                @click="submit"
+                                                v-show="isDrawingPhase"
+                                                :disabled="!actionsEnabled"
+                                        >
+                                                Submit
+                                        </button>
+                                        <button
+                                                class="btn secondary undo-drawing"
+                                                @click="undo"
+                                                v-show="isDrawingPhase"
+                                                :disabled="!actionsEnabled"
+                                        >
+                                                Undo
+                                        </button>
 					</div>
 					<div id="drawing-actions-left" class="fill-space">
 						<game-menu :items="menuItems"></game-menu>
@@ -215,11 +215,12 @@ export default {
 			required: true,
 		},
 	},
-	data() {
-		return {
-			canvasState: CanvasState.SPECTATE,
-			stroke: strokeTracker,
-			drawingPad: drawingPad,
+        data() {
+                return {
+                        GAME_PHASE,
+                        canvasState: CanvasState.SPECTATE,
+                        stroke: strokeTracker,
+                        drawingPad: drawingPad,
 			promptVisible: true,
 			menuItems: [],
 			playerStatusesListMaxWidth: 0,
@@ -257,16 +258,19 @@ export default {
 		roundAndTurn() {
 			this.reset();
 		},
-		['gameState.round']() {
-			this.promptVisible = true;
-		},
-		['gameState.phase']() {
-			this.menuItems = this.generateMenuOptions();
-		},
-		['sfxDisabled']() {
-			this.menuItems = this.generateMenuOptions();
-		},
-		promptVisible() {
+                ['gameState.round']() {
+                        this.promptVisible = true;
+                },
+                ['gameState.phase']() {
+                        this.menuItems = this.generateMenuOptions();
+                },
+                ['gameState.voteResult']() {
+                        this.menuItems = this.generateMenuOptions();
+                },
+                ['sfxDisabled']() {
+                        this.menuItems = this.generateMenuOptions();
+                },
+                promptVisible() {
 			this.menuItems = this.generateMenuOptions();
 		},
 	},
