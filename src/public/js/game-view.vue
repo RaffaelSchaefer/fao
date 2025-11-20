@@ -34,20 +34,33 @@
 					</p>
 				</div>
 			</confirmation>
-			<!-- <vote-dialog v-show="currentDialog === 'VOTE'" @close="hideDialogs"></vote-dialog> -->
-			<div class="stripe">
-				<div id="game-info" class="stripe-content canvas-aligned">
-					<h1 class="prompt" v-show="promptVisible">{{ promptText }}</h1>
-					<h2 class="current-turn" :style="{ color: userColor }">{{ whoseTurnText }}</h2>
-				</div>
-			</div>
-			<div class="stripe flex-center">
-				<div id="drawing-pad" class="stripe-content">
-					<connection-overlay :gameConnection="gameConnection"></connection-overlay>
-					<canvas
-						id="new-paint"
-						touch-action="none"
-						@pointerdown="pdown"
+                        <!-- <vote-dialog v-show="currentDialog === 'VOTE'" @close="hideDialogs"></vote-dialog> -->
+                        <div class="stripe">
+                                <div id="game-info" class="stripe-content canvas-aligned">
+                                        <h1 class="prompt" v-show="promptVisible">{{ promptText }}</h1>
+                                        <h2 class="current-turn" :style="{ color: userColor }">{{ whoseTurnText }}</h2>
+                                </div>
+                        </div>
+                        <div class="stripe" v-if="gameState.phase === GAME_PHASE.VOTE">
+                                <div class="stripe-content">
+                                        <vote-panel
+                                                :users="gameState.users"
+                                                :votes="gameState.votes || {}"
+                                                :vote-counts="gameState.voteCounts || {}"
+                                                :votes-required="gameState.votesRequired || gameState.users.length"
+                                                :vote-result="gameState.voteResult"
+                                                :username="username"
+                                                @vote="submitVote"
+                                        />
+                                </div>
+                        </div>
+                        <div class="stripe flex-center">
+                        <div id="drawing-pad" class="stripe-content">
+                                <connection-overlay :gameConnection="gameConnection"></connection-overlay>
+                                <canvas
+                                        id="new-paint"
+                                        touch-action="none"
+                                        @pointerdown="pdown"
 						@pointermove="pmove"
 						@pointerup="endStroke"
 						@pointerout="endStroke"
@@ -59,30 +72,28 @@
 				<div class="stripe-content flex-center canvas-aligned">
 					<div id="drawing-actions-right" class="fill-space"></div>
 					<div id="drawing-actions-center">
-						<button
-							class="btn primary big"
-							@click="nextRound"
-							v-show="isRoundOver"
-							:disabled="!isRoundOver"
-						>
-							New Round
-						</button>
-						<button
-							class="btn primary submit-drawing"
-							@click="submit"
-							v-show="!isRoundOver"
-							:disabled="!actionsEnabled"
-						>
-							Submit
-						</button>
-						<button
-							class="btn secondary undo-drawing"
-							@click="undo"
-							v-show="!isRoundOver"
-							:disabled="!actionsEnabled"
-						>
-							Undo
-						</button>
+                                        <button
+                                                class="btn primary big"
+                                                @click="nextRound"
+                                                v-show="canStartNextRound"
+                                                :disabled="!canStartNextRound"
+                                        >
+                                                New Round
+                                        </button>
+                                        <button
+                                                class="btn primary submit-drawing"
+                                                @click="submit"
+                                                :disabled="!actionsEnabled"
+                                        >
+                                                Submit
+                                        </button>
+                                        <button
+                                                class="btn secondary undo-drawing"
+                                                @click="undo"
+                                                :disabled="!actionsEnabled"
+                                        >
+                                                Undo
+                                        </button>
 					</div>
 					<div id="drawing-actions-left" class="fill-space">
 						<game-menu :items="menuItems"></game-menu>
@@ -116,6 +127,7 @@ import Confirmation from './confirmation';
 // import VoteDialog from './vote-dialog';
 import drawingPad from './drawing-pad';
 import PlayerStatusesList from './player-statuses-list';
+import VotePanel from './vote-panel.vue';
 
 const CanvasState = {
 	EMPTY: 'EMPTY',
@@ -180,12 +192,13 @@ const SIDE_PLAYER_STATUSES_LIST_MIN_WIDTH = 120;
 export default {
 	name: 'GameView',
 	components: {
-		ConnectionOverlay,
-		GameMenu,
-		RoomInfo,
-		Confirmation,
-		PlayerStatusesList,
-	},
+                ConnectionOverlay,
+                GameMenu,
+                RoomInfo,
+                Confirmation,
+                PlayerStatusesList,
+                VotePanel,
+        },
 	props: {
 		gameConnection: {
 			type: String,
@@ -200,11 +213,12 @@ export default {
 			required: true,
 		},
 	},
-	data() {
-		return {
-			canvasState: CanvasState.SPECTATE,
-			stroke: strokeTracker,
-			drawingPad: drawingPad,
+        data() {
+                return {
+                        GAME_PHASE,
+                        canvasState: CanvasState.SPECTATE,
+                        stroke: strokeTracker,
+                        drawingPad: drawingPad,
 			promptVisible: true,
 			menuItems: [],
 			playerStatusesListMaxWidth: 0,
@@ -215,40 +229,62 @@ export default {
 		promptText() {
 			return `${this.gameState.hint}: ${this.gameState.keyword}`;
 		},
-		whoseTurnText() {
-			return this.gameState.phase === GAME_PHASE.VOTE
-				? 'Time to vote!'
-				: `${this.gameState.whoseTurn}'s turn`;
-		},
-		userColor() {
-			return this.gameState.getUserColor(this.gameState.whoseTurn);
-		},
-		isRoundOver() {
-			return this.gameState.phase === GAME_PHASE.VOTE;
-		},
-		actionsEnabled() {
-			return (
-				this.canvasState === 'PREVIEW' && this.gameConnection === CONNECTION_STATE.CONNECT
-			);
-		},
-		roundAndTurn() {
-			return this.gameState.round + '-' + this.gameState.turn;
-		},
-	},
+                whoseTurnText() {
+                        return this.gameState.phase === GAME_PHASE.VOTE
+                                ? 'Time to vote!'
+                                : `${this.gameState.whoseTurn}'s turn`;
+                },
+                userColor() {
+                        return this.gameState.getUserColor(this.gameState.whoseTurn);
+                },
+                isDrawingPhase() {
+                        return this.gameState.phase === GAME_PHASE.PLAY;
+                },
+                votingComplete() {
+                        const hasResult = Boolean(this.gameState.voteResult);
+                        if (hasResult) {
+                                return (
+                                        this.gameState.voteResult.votesCast >=
+                                        this.gameState.voteResult.votesRequired
+                                );
+                        }
+                        const votesCast = Object.keys(this.gameState.votes || {}).length;
+                        return votesCast >= (this.gameState.votesRequired || this.gameState.users.length);
+                },
+                canStartNextRound() {
+                        return this.gameState.phase === GAME_PHASE.VOTE && this.votingComplete;
+                },
+                actionsEnabled() {
+                        return (
+                                this.gameState.phase === GAME_PHASE.PLAY &&
+                                this.canvasState === 'PREVIEW' &&
+                                this.gameConnection === CONNECTION_STATE.CONNECT
+                        );
+                },
+                roundAndTurn() {
+                        return this.gameState.round + '-' + this.gameState.turn;
+                },
+                username() {
+                        return Store.state.username;
+                },
+        },
 	watch: {
 		roundAndTurn() {
 			this.reset();
 		},
-		['gameState.round']() {
-			this.promptVisible = true;
-		},
-		['gameState.phase']() {
-			this.menuItems = this.generateMenuOptions();
-		},
-		['sfxDisabled']() {
-			this.menuItems = this.generateMenuOptions();
-		},
-		promptVisible() {
+                ['gameState.round']() {
+                        this.promptVisible = true;
+                },
+                ['gameState.phase']() {
+                        this.menuItems = this.generateMenuOptions();
+                },
+                ['gameState.voteResult']() {
+                        this.menuItems = this.generateMenuOptions();
+                },
+                ['sfxDisabled']() {
+                        this.menuItems = this.generateMenuOptions();
+                },
+                promptVisible() {
 			this.menuItems = this.generateMenuOptions();
 		},
 	},
@@ -331,8 +367,8 @@ export default {
 			this.resizeDrawingPad();
 			this.resizePlayerStatusesList();
 		},
-		resizeDrawingPad() {
-			drawingPad.adjustSize();
+                resizeDrawingPad() {
+                        drawingPad.adjustSize();
 			drawingPad.clearLayer(Layer.TOP);
 			drawingPad.drawStroke(Layer.TOP, strokeTracker.points, 'black');
 			drawingPad.clearLayer(Layer.BOTTOM);
@@ -364,31 +400,37 @@ export default {
 		hideDialogs() {
 			this.currentDialog = undefined;
 		},
-		setup() {
-			Store.submitReturnToSetup();
-			this.hideDialogs();
-		},
-		rules() {
-			Store.setView(VIEW.RULES);
-		},
-		generateMenuOptions() {
-			const nextRoundOption =
-				this.gameState.phase === GAME_PHASE.VOTE
-					? {
-							text: 'New round',
-							action: this.nextRound,
-					  }
-					: {
-							text: 'Skip this round',
-							action: () => {
-								this.showDialog(Dialogs.SKIP_ROUND);
-							},
-					  };
-			return [
-				{
-					text: this.promptVisible ? 'Hide prompt' : 'Show prompt',
-					action: this.togglePrompt,
-				},
+                setup() {
+                        Store.submitReturnToSetup();
+                        this.hideDialogs();
+                },
+                submitVote(target) {
+                        Store.submitVote(target);
+                },
+                rules() {
+                        Store.setView(VIEW.RULES);
+                },
+                generateMenuOptions() {
+                        const nextRoundOption =
+                                this.gameState.phase === GAME_PHASE.VOTE
+                                        ? {
+                                                        text: 'New round',
+                                                        action: this.canStartNextRound
+                                                                ? this.nextRound
+                                                                : undefined,
+                                                        disabled: !this.canStartNextRound,
+                                          }
+                                        : {
+                                                        text: 'Skip this round',
+                                                        action: () => {
+                                                                this.showDialog(Dialogs.SKIP_ROUND);
+                                                        },
+                                          };
+                        return [
+                                {
+                                        text: this.promptVisible ? 'Hide prompt' : 'Show prompt',
+                                        action: this.togglePrompt,
+                                },
 				{
 					text: this.sfxDisabled ? 'Unmute sound' : 'Mute sound',
 					action: this.toggleSfx,

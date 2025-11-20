@@ -104,17 +104,29 @@ const MessageHandlers = {
 		broadcastRoomState(io, rm, MESSAGE.START_GAME);
 	},
 
-	[MESSAGE.SUBMIT_STROKE](io, sock, data) {
-		GamePrecond.sockHasUser(sock);
-		GamePrecond.userIsInARoom(sock.user);
-		GamePrecond.gameInProgress(sock.user.gameRoom);
-		GamePrecond.isUsersTurn(sock.user);
+        [MESSAGE.SUBMIT_STROKE](io, sock, data) {
+                GamePrecond.sockHasUser(sock);
+                GamePrecond.userIsInARoom(sock.user);
+                GamePrecond.gameInProgress(sock.user.gameRoom);
+                GamePrecond.isUsersTurn(sock.user);
 		let rm = sock.user.gameRoom;
 		rm.addStroke(sock.user.name, data.points);
 		rm.nextTurn();
 
-		broadcastRoomState(io, rm, MESSAGE.NEW_TURN);
-	},
+                broadcastRoomState(io, rm, MESSAGE.NEW_TURN);
+        },
+
+        [MESSAGE.SUBMIT_VOTE](io, sock, data) {
+                GamePrecond.sockHasUser(sock);
+                GamePrecond.userIsInARoom(sock.user);
+                GamePrecond.gameInProgress(sock.user.gameRoom);
+                GamePrecond.votingInProgress(sock.user.gameRoom);
+                let rm = sock.user.gameRoom;
+                rm.addVote(sock.user.name, data.target);
+
+                // When voting finishes, the state will contain the reveal for everyone
+                broadcastRoomState(io, rm, MESSAGE.SUBMIT_VOTE);
+        },
 
 	[MESSAGE.RETURN_TO_SETUP](io, sock, data) {
 		GamePrecond.sockHasUser(sock);
@@ -193,10 +205,15 @@ function joinRoom(user, room, rejoin, isHost = false) {
 
 // send roomstate update to all users, accounting for different roles (i.e., faker vs artist)
 function broadcastRoomState(io, room, messageName, addtlProcessFn) {
-	let state = ClientAdapter.generateStateJson(room);
-	if (addtlProcessFn) {
-		state = addtlProcessFn(state);
-	}
+        if (room.phase === GAME_PHASE.VOTE && room.voteResult === undefined) {
+                if (room.getVotesCast() >= room.getVotesRequired()) {
+                        room.voteResult = room.getVoteResult();
+                }
+        }
+        let state = ClientAdapter.generateStateJson(room);
+        if (addtlProcessFn) {
+                state = addtlProcessFn(state);
+        }
 
 	if (room.phase === GAME_PHASE.SETUP) {
 		io.in(room.roomCode).emit(messageName, {

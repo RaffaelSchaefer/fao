@@ -43,18 +43,25 @@
 
 	ul.dropup-list {
 		margin: 0;
-		li {
-			color: var(--grey7);
-			font-family: var(--body-font);
-			border-radius: 5px;
-			padding: 8px 16px;
-			cursor: pointer;
-			&:not(:last-child) {
-				margin-bottom: 4px;
-			}
-			&:hover {
-				background-color: var(--grey1);
-			}
-		}
-	}
+                li {
+                        color: var(--grey7);
+                        font-family: var(--body-font);
+                        border-radius: 5px;
+                        padding: 8px 16px;
+                        cursor: pointer;
+                        &:not(:last-child) {
+                                margin-bottom: 4px;
+                        }
+                        &:hover {
+                                background-color: var(--grey1);
+                        }
+                        &.disabled {
+                                color: var(--grey4);
+                                cursor: not-allowed;
+                                &:hover {
+                                        background-color: transparent;
+                                }
+                        }
+                }
+        }
 }

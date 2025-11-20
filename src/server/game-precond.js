@@ -1,5 +1,6 @@
 import * as Lobby from './lobby.js';
 import GameError from './game-error.js';
+import GAME_PHASE from '../common/game-phase.js';
 
 // Room/game state validators
 
@@ -32,15 +33,20 @@ const GamePrecond = {
 			throw new GameError(`Rm${roomCode} DNE`, 'This room is unavailable');
 		}
 	},
-	gameInProgress(room) {
-		if (!room.isGameInProgress()) {
-			throw new GameError('Game must be in progress');
-		}
-	},
-	gameNotInProgress(room) {
-		if (room.isGameInProgress()) {
-			throw new GameError(`Rm${room.roomCode} A game is already in progress`);
-		}
+        gameInProgress(room) {
+                if (!room.isGameInProgress()) {
+                        throw new GameError('Game must be in progress');
+                }
+        },
+        votingInProgress(room) {
+                if (room.phase !== GAME_PHASE.VOTE) {
+                        throw new GameError('Voting must be in progress');
+                }
+        },
+        gameNotInProgress(room) {
+                if (room.isGameInProgress()) {
+                        throw new GameError(`Rm${room.roomCode} A game is already in progress`);
+                }
 	},
 	roomIsNotFull(room) {
 		if (room.isFull()) {
