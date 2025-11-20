@@ -69,11 +69,12 @@ const Store = {
 	},
 	submitCreateGame,
 	submitJoinGame,
-	submitLeaveGame,
-	submitStartGame,
-	submitStroke,
-	submitNextRound,
-	submitReturnToSetup,
+        submitLeaveGame,
+        submitStartGame,
+        submitStroke,
+        submitVote,
+        submitNextRound,
+        submitReturnToSetup,
 };
 
 function handleSocket(messageName, handler, errHandler) {
@@ -124,10 +125,11 @@ handleSocket(
 	}
 );
 handleSocket(MESSAGE.LEAVE_ROOM, function(data) {
-	// let the socket disconnect handler take care of the rest
-	// Store.setGameState(undefined);
+        // let the socket disconnect handler take care of the rest
+        // Store.setGameState(undefined);
 });
 handleSocket(MESSAGE.USER_LEFT);
+handleSocket(MESSAGE.SUBMIT_VOTE);
 handleSocket(MESSAGE.START_GAME);
 handleSocket(MESSAGE.NEW_TURN);
 handleSocket(MESSAGE.RETURN_TO_SETUP);
@@ -168,12 +170,17 @@ function submitStartGame() {
 	socket.emit(MESSAGE.START_GAME, {});
 }
 function submitStroke(points) {
-	socket.emit(MESSAGE.SUBMIT_STROKE, {
-		points: points,
-	});
+        socket.emit(MESSAGE.SUBMIT_STROKE, {
+                points: points,
+        });
+}
+function submitVote(target) {
+        socket.emit(MESSAGE.SUBMIT_VOTE, {
+                target: target,
+        });
 }
 function submitNextRound() {
-	socket.emit(MESSAGE.NEXT_ROUND);
+        socket.emit(MESSAGE.NEXT_ROUND);
 }
 function submitReturnToSetup() {
 	socket.emit(MESSAGE.RETURN_TO_SETUP);

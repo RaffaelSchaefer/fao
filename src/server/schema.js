@@ -44,14 +44,25 @@ SCHEMA[MESSAGE.LEAVE_ROOM] = {
 	required: [],
 };
 SCHEMA[MESSAGE.START_GAME] = {
-	$id: MESSAGE.START_GAME,
-	properties: {},
-	required: [],
+        $id: MESSAGE.START_GAME,
+        properties: {},
+        required: [],
+};
+SCHEMA[MESSAGE.SUBMIT_VOTE] = {
+        $id: MESSAGE.SUBMIT_VOTE,
+        properties: {
+                target: {
+                        type: 'string',
+                        minLength: usernameMinLength,
+                        maxLength: usernameMaxLength,
+                },
+        },
+        required: ['target'],
 };
 SCHEMA[MESSAGE.SUBMIT_STROKE] = {
-	$id: MESSAGE.SUBMIT_STROKE,
-	properties: {
-		points: {
+        $id: MESSAGE.SUBMIT_STROKE,
+        properties: {
+                points: {
 			type: 'array',
 			items: {
 				type: 'object',
