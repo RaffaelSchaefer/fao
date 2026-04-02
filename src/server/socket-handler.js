@@ -124,6 +124,71 @@ const MessageHandlers = {
 		broadcastRoomState(io, rm, MESSAGE.RETURN_TO_SETUP);
 	},
 
+	[MESSAGE.SUBMIT_VOTE](io, sock, data) {
+		GamePrecond.sockHasUser(sock);
+		GamePrecond.userIsInARoom(sock.user);
+		let rm = sock.user.gameRoom;
+		GamePrecond.gameInProgress(rm);
+		if (rm.phase !== GAME_PHASE.VOTE) {
+			sock.emit(MESSAGE.SUBMIT_VOTE, { err: 'Not in voting phase' });
+			return;
+		}
+		if (rm.votes[sock.user.name]) {
+			sock.emit(MESSAGE.SUBMIT_VOTE, { err: 'Already voted' });
+			return;
+		}
+		let success = rm.submitVote(sock.user.name, data.targetName);
+		if (!success) {
+			sock.emit(MESSAGE.SUBMIT_VOTE, { err: 'Invalid target' });
+			return;
+		}
+		broadcastRoomState(io, rm, MESSAGE.SUBMIT_VOTE);
+		// When everyone has voted, calculate scores and transition
+		if (rm.allVotesIn()) {
+			let result = rm.calculateScores();
+			broadcastRoomState(io, rm, MESSAGE.VOTE_RESULT, (res) => {
+				res.roundResult = result;
+				return res;
+			});
+		}
+	},
+
+	[MESSAGE.ADD_CUSTOM_TOPIC](io, sock, data) {
+		GamePrecond.sockHasUser(sock);
+		GamePrecond.userIsInARoom(sock.user);
+		let rm = sock.user.gameRoom;
+		if (rm.host.name !== sock.user.name) {
+			sock.emit(MESSAGE.ADD_CUSTOM_TOPIC, { err: 'Only the host can add topics' });
+			return;
+		}
+		rm.addCustomTopic(data.keyword, data.hint);
+		broadcastRoomState(io, rm, MESSAGE.ADD_CUSTOM_TOPIC);
+	},
+
+	[MESSAGE.REMOVE_CUSTOM_TOPIC](io, sock, data) {
+		GamePrecond.sockHasUser(sock);
+		GamePrecond.userIsInARoom(sock.user);
+		let rm = sock.user.gameRoom;
+		if (rm.host.name !== sock.user.name) {
+			sock.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, { err: 'Only the host can remove topics' });
+			return;
+		}
+		rm.removeCustomTopic(data.index);
+		broadcastRoomState(io, rm, MESSAGE.REMOVE_CUSTOM_TOPIC);
+	},
+
+	[MESSAGE.TOGGLE_CUSTOM_TOPICS](io, sock, data) {
+		GamePrecond.sockHasUser(sock);
+		GamePrecond.userIsInARoom(sock.user);
+		let rm = sock.user.gameRoom;
+		if (rm.host.name !== sock.user.name) {
+			sock.emit(MESSAGE.TOGGLE_CUSTOM_TOPICS, { err: 'Only the host can toggle topics' });
+			return;
+		}
+		rm.useCustomTopicsOnly = data.customOnly;
+		broadcastRoomState(io, rm, MESSAGE.TOGGLE_CUSTOM_TOPICS);
+	},
+
 	disconnect(io, sock, data) {
 		let user = sock.user;
 		if (user) {

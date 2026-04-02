@@ -74,6 +74,18 @@ const Store = {
 	submitStroke,
 	submitNextRound,
 	submitReturnToSetup,
+	submitVote,
+	submitAddCustomTopic,
+	submitRemoveCustomTopic,
+	submitToggleCustomOnly,
+};
+
+// Called when a round result arrives
+Store.onRoundResult = function(result) {
+	// Store on gameState for dialogs to access
+	if (this.state.gameState) {
+		this.state.gameState.lastRoundResult = result;
+	}
 };
 
 function handleSocket(messageName, handler, errHandler) {
@@ -99,6 +111,7 @@ function handleSocket(messageName, handler, errHandler) {
 		}
 	});
 }
+// Override: VOTE_RESULT handler calls setGameState separately (below)
 handleSocket(
 	MESSAGE.CREATE_ROOM,
 	function(data) {
@@ -131,6 +144,17 @@ handleSocket(MESSAGE.USER_LEFT);
 handleSocket(MESSAGE.START_GAME);
 handleSocket(MESSAGE.NEW_TURN);
 handleSocket(MESSAGE.RETURN_TO_SETUP);
+handleSocket(
+	MESSAGE.VOTE_RESULT,
+	function(data) {
+		// Apply room state directly without auto-routing
+		if (data.roomState && Store.state.gameState) {
+			Store.state.gameState.adoptJson(data.roomState);
+		}
+		// Trigger round result dialog via event stored on gameState
+		Store.onRoundResult(data.roundResult);
+	}
+);
 
 const usernameValidationWarning =
 	'Username must be 1-15 characters long, and can only contain alphanumerics and spaces';
@@ -177,6 +201,27 @@ function submitNextRound() {
 }
 function submitReturnToSetup() {
 	socket.emit(MESSAGE.RETURN_TO_SETUP);
+}
+function submitVote(targetName) {
+	socket.emit(MESSAGE.SUBMIT_VOTE, {
+		targetName: targetName,
+	});
+}
+function submitAddCustomTopic(keyword, hint) {
+	socket.emit(MESSAGE.ADD_CUSTOM_TOPIC, {
+		keyword: keyword,
+		hint: hint || '',
+	});
+}
+function submitRemoveCustomTopic(index) {
+	socket.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, {
+		index: index,
+	});
+}
+function submitToggleCustomOnly(customOnly) {
+	socket.emit(MESSAGE.TOGGLE_CUSTOM_TOPICS, {
+		customOnly: customOnly,
+	});
 }
 
 socket.on('disconnect', function() {

@@ -34,7 +34,22 @@
 					</p>
 				</div>
 			</confirmation>
-			<!-- <vote-dialog v-show="currentDialog === 'VOTE'" @close="hideDialogs"></vote-dialog> -->
+			<vote-dialog
+				v-show="currentDialog === 'VOTE'"
+				:users="gameState.users"
+				:my-name="username"
+				@close="hideDialogs"
+				@submit-vote="submitVote"
+			></vote-dialog>
+			<round-result-dialog
+				v-show="currentDialog === 'ROUND_RESULT'"
+				:round-result="gameState.lastRoundResult"
+				:users="gameState.users"
+				:scores="gameState.scores"
+				@close="hideDialogs"
+				@next-round="nextRound"
+				@to-setup="setup"
+			></round-result-dialog>
 			<div class="stripe">
 				<div id="game-info" class="stripe-content canvas-aligned">
 					<h1 class="prompt" v-show="promptVisible">{{ promptText }}</h1>
@@ -42,7 +57,7 @@
 				</div>
 			</div>
 			<div class="stripe flex-center">
-				<div id="drawing-pad" class="stripe-content">
+				<div id="drawing-pad" class="stripe-content" v-show="!isVotingPhase">
 					<connection-overlay :gameConnection="gameConnection"></connection-overlay>
 					<canvas
 						id="new-paint"
@@ -113,7 +128,8 @@ import ConnectionOverlay from './connection-overlay';
 import GameMenu from './game-menu';
 import RoomInfo from './room-info';
 import Confirmation from './confirmation';
-// import VoteDialog from './vote-dialog';
+import VoteDialog from './vote-dialog';
+import RoundResultDialog from './round-result-dialog';
 import drawingPad from './drawing-pad';
 import PlayerStatusesList from './player-statuses-list';
 
@@ -184,6 +200,8 @@ export default {
 		GameMenu,
 		RoomInfo,
 		Confirmation,
+		VoteDialog,
+		RoundResultDialog,
 		PlayerStatusesList,
 	},
 	props: {
@@ -226,6 +244,9 @@ export default {
 		isRoundOver() {
 			return this.gameState.phase === GAME_PHASE.VOTE;
 		},
+		isVotingPhase() {
+			return this.gameState && this.gameState.phase === GAME_PHASE.VOTE;
+		},
 		actionsEnabled() {
 			return (
 				this.canvasState === 'PREVIEW' && this.gameConnection === CONNECTION_STATE.CONNECT
@@ -242,8 +263,25 @@ export default {
 		['gameState.round']() {
 			this.promptVisible = true;
 		},
-		['gameState.phase']() {
+		['gameState.phase'](newPhase) {
 			this.menuItems = this.generateMenuOptions();
+			if (newPhase === GAME_PHASE.VOTE) {
+				// Auto-show vote dialog when voting starts
+				this.hideDialogs();
+				this.showDialog(Dialogs.VOTE);
+			} else {
+				// Hide vote dialog when phase changes
+				if (this.currentDialog === Dialogs.VOTE) {
+					this.hideDialogs();
+				}
+			}
+		},
+		['gameState.lastRoundResult'](newResult) {
+			if (newResult) {
+				// Show round result dialog immediately
+				this.hideDialogs();
+				this.showDialog(Dialogs.ROUND_RESULT);
+			}
 		},
 		['sfxDisabled']() {
 			this.menuItems = this.generateMenuOptions();
@@ -367,6 +405,13 @@ export default {
 		setup() {
 			Store.submitReturnToSetup();
 			this.hideDialogs();
+		},
+		submitVote(targetName) {
+			Store.submitVote(targetName);
+			// Close vote dialog after submitting — state update will refresh votes
+			this.hideDialogs();
+			// Show a temporary "waiting" overlay
+			this.showDialog(Dialogs.VOTE);
 		},
 		rules() {
 			Store.setView(VIEW.RULES);

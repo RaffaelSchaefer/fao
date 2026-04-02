@@ -4,6 +4,7 @@ function generateClientGameState() {
 	return {
 		roomCode: undefined,
 		users: [],
+		scores: {},
 		round: undefined,
 		phase: undefined,
 		turn: undefined,
@@ -12,6 +13,10 @@ function generateClientGameState() {
 		hint: undefined,
 		fakerName: undefined,
 		strokes: [],
+		votes: {},
+		customTopics: [],
+		useCustomTopicsOnly: false,
+		roundResults: [],
 
 		getUsernames() {
 			return this.users.map((u) => u.name);

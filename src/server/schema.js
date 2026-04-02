@@ -70,6 +70,51 @@ SCHEMA[MESSAGE.SUBMIT_STROKE] = {
 	},
 	required: ['points'],
 };
+SCHEMA[MESSAGE.SUBMIT_VOTE] = {
+	$id: MESSAGE.SUBMIT_VOTE,
+	properties: {
+		targetName: {
+			type: 'string',
+			minLength: 1,
+			maxLength: usernameMaxLength,
+		},
+	},
+	required: ['targetName'],
+};
+SCHEMA[MESSAGE.ADD_CUSTOM_TOPIC] = {
+	$id: MESSAGE.ADD_CUSTOM_TOPIC,
+	properties: {
+		keyword: {
+			type: 'string',
+			minLength: 1,
+			maxLength: 30,
+		},
+		hint: {
+			type: 'string',
+			maxLength: 50,
+		},
+	},
+	required: ['keyword'],
+};
+SCHEMA[MESSAGE.REMOVE_CUSTOM_TOPIC] = {
+	$id: MESSAGE.REMOVE_CUSTOM_TOPIC,
+	properties: {
+		index: {
+			type: 'integer',
+			minimum: 0,
+		},
+	},
+	required: ['index'],
+};
+SCHEMA[MESSAGE.TOGGLE_CUSTOM_TOPICS] = {
+	$id: MESSAGE.TOGGLE_CUSTOM_TOPICS,
+	properties: {
+		customOnly: {
+			type: 'boolean',
+		},
+	},
+	required: ['customOnly'],
+};
 
 for (let schema of Object.values(SCHEMA)) {
 	ajv.addSchema(schema, schema.$id);
