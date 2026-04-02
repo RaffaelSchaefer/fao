@@ -201,20 +201,23 @@ export default {
 
 .topics-toggle {
 	width: 100%;
-	padding: 10px;
-	background: transparent;
-	border: 1px solid var(--grey2);
-	border-radius: 6px;
+	padding: 10px 14px;
+	background: var(--grey1);
+	border: 1px solid var(--grey3);
+	border-radius: 8px;
 	color: var(--grey6);
 	font-family: var(--button-font);
 	font-size: 14px;
+	font-weight: 700;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background 0.15s, border-color 0.15s, color 0.15s;
+	text-align: left;
 }
 
 .topics-toggle:hover {
-	background: var(--grey1);
-	border-color: var(--grey3);
+	background: var(--grey2);
+	border-color: var(--grey4);
+	color: var(--grey7);
 }
 
 .topics-inputs {
@@ -229,17 +232,26 @@ export default {
 	flex: 1;
 	min-width: 0;
 	padding: 8px 10px;
-	border: 1px solid var(--grey2);
+	background: var(--grey2);
+	border: 1px solid var(--grey3);
 	border-radius: 6px;
+	color: var(--grey7);
 	font-family: var(--button-font);
 	font-size: 14px;
+	font-weight: 600;
 	outline: none;
-	transition: border-color 0.15s;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.keyword-input::placeholder,
+.hint-input::placeholder {
+	color: var(--grey5);
 }
 
 .keyword-input:focus,
 .hint-input:focus {
-	border-color: var(--blue4);
+	border-color: var(--artist4);
+	background: var(--grey3);
 }
 
 @media screen and (max-width: 480px) {
@@ -254,7 +266,7 @@ export default {
 }
 
 .topics-toggle-row {
-	margin: 6px 0;
+	margin: 8px 0;
 }
 
 .topics-checkbox-label {
@@ -263,6 +275,7 @@ export default {
 	gap: 8px;
 	cursor: pointer;
 	font-size: 14px;
+	font-weight: 700;
 	color: var(--grey6);
 }
 
@@ -270,6 +283,7 @@ export default {
 	width: 18px;
 	height: 18px;
 	cursor: pointer;
+	accent-color: var(--artist4);
 }
 
 .topics-list {
@@ -282,11 +296,14 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 6px 8px;
-	border: 1px solid var(--grey1);
-	border-radius: 4px;
+	padding: 8px 12px;
+	background: var(--grey2);
+	border: 1px solid var(--grey3);
+	border-radius: 8px;
 	margin-bottom: 4px;
 	font-size: 14px;
+	font-weight: 600;
+	color: var(--grey7);
 }
 
 .topic-item:last-child {
@@ -294,27 +311,29 @@ export default {
 }
 
 .topic-text small {
-	color: var(--grey4);
+	color: var(--grey5);
 }
 
 .btn-remove {
 	background: none;
 	border: none;
-	color: var(--grey4);
+	color: var(--grey5);
 	cursor: pointer;
-	font-size: 14px;
+	font-size: 16px;
 	padding: 0 6px;
 	transition: color 0.15s;
+	line-height: 1;
 }
 
 .btn-remove:hover {
-	color: var(--danger);
+	color: #ff4f4f;
 }
 
 .no-topics {
 	text-align: center;
-	color: var(--grey4);
+	color: var(--grey5);
 	font-size: 13px;
-	margin: 6px 0;
+	font-style: italic;
+	margin: 8px 0;
 }
 </style>

@@ -102,34 +102,51 @@ export default {
 
 .faker-reveal {
 	text-align: center;
-	margin-bottom: 12px;
+	margin-bottom: 16px;
+	padding: 14px;
+	background: var(--grey2);
+	border-radius: 10px;
+	border: 1px solid var(--grey3);
 }
 
 .faker-label {
 	color: var(--grey5);
-	font-size: 14px;
-	display: inline;
-	margin: 0;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-weight: 800;
+	display: block;
+	margin: 0 0 4px;
 }
 
 .faker-name {
-	font-size: 24px;
+	font-family: var(--display-font);
+	font-size: 28px;
 	color: var(--grey7);
-	margin: 4px 0 0;
+	margin: 0;
 }
 
 .faker-status {
-	font-size: 14px;
+	font-size: 13px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
 	display: block;
+	margin-top: 4px;
+	color: var(--artist4);
 }
 
 .scoreboard {
-	margin-top: 8px;
+	margin-top: 12px;
 }
 
 .scoreboard h3 {
-	margin: 0 0 8px;
+	margin: 0 0 10px;
 	text-align: center;
+	font-size: 14px;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: var(--grey5);
 }
 
 .score-table {
@@ -139,19 +156,26 @@ export default {
 
 .score-table th {
 	color: var(--grey5);
-	border-bottom: 1px solid var(--grey2);
-	padding: 4px;
+	border-bottom: 1px solid var(--grey3);
+	padding: 4px 6px;
 	text-align: left;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-weight: 800;
 }
 
 .score-table td {
-	padding: 6px 4px;
-	border-bottom: 1px solid var(--grey1);
+	padding: 8px 6px;
+	border-bottom: 1px solid var(--grey2);
+	font-weight: 700;
 }
 
 .rank {
-	color: var(--grey4);
-	width: 20px;
+	color: var(--grey5);
+	width: 24px;
+	font-weight: 600;
+	font-size: 13px;
 }
 
 .score-total {

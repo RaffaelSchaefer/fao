@@ -103,36 +103,43 @@ export default {
 
 .vote-instruction {
 	text-align: center;
-	margin-bottom: 8px;
+	margin-bottom: 12px;
+	color: var(--grey6);
+	font-size: 15px;
 }
 
 #vote-list {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 6px;
 }
 
 .vote {
 	display: block;
 	width: 100%;
-	padding: 10px 12px;
-	border: 2px solid var(--grey2);
-	border-radius: 8px;
-	background: var(--grey1);
+	padding: 12px 16px;
+	border: 2px solid var(--grey3);
+	border-radius: 10px;
+	background: var(--grey2);
 	color: var(--grey7);
 	font-family: var(--button-font);
 	font-size: 16px;
+	font-weight: 700;
 	cursor: pointer;
-	transition: border-color 0.15s;
+	transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+	text-align: left;
 }
 
 .vote:hover {
-	background: var(--grey2);
+	border-color: var(--grey4);
+	background: var(--grey3);
 }
 
 .vote.selected {
-	border-color: var(--blue4);
-	background: hsl(200, 60%, 92%);
+	border-color: var(--artist4);
+	background: rgba(212, 255, 0, 0.1);
+	box-shadow: 0 0 12px rgba(212, 255, 0, 0.2);
+	color: var(--artist3);
 }
 
 .dialog-actions {

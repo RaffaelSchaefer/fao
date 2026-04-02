@@ -39,3 +39,29 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+#title-banner {
+	padding-top: 20px;
+	padding-bottom: 4px;
+}
+
+#title-banner .title {
+	position: relative;
+	display: inline-block;
+}
+
+#title-banner .title::after {
+	content: '';
+	display: block;
+	height: 4px;
+	background: linear-gradient(90deg, var(--artist4) 0%, rgba(212, 255, 0, 0.3) 60%, transparent 100%);
+	border-radius: 2px;
+	margin-top: 4px;
+}
+
+#about-content {
+	color: var(--grey5);
+	font-size: 14px;
+}
+</style>

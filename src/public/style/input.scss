@@ -1,58 +1,72 @@
 .btn {
 	font-family: var(--button-font);
-	letter-spacing: 0.03em;
-	font-size: 16px;
-	font-weight: 700;
+	letter-spacing: 0.07em;
+	font-size: 13px;
+	font-weight: 800;
+	text-transform: uppercase;
 	border-style: solid;
-	border-radius: 5px;
+	border-radius: 8px;
 	border-width: 2px;
-	min-width: 96px;
+	min-width: 100px;
 	line-height: 40px;
-	padding: 0 16px;
-	margin: 8px;
+	padding: 0 18px;
+	margin: 6px;
 	cursor: pointer;
+	position: relative;
+	transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
 
 	&.big {
-		min-width: 160px;
+		min-width: 165px;
+		font-size: 14px;
 	}
 	&:disabled {
-		border-color: var(--grey1);
-		background-color: var(--grey0);
-		color: var(--grey3);
+		border-color: var(--grey3);
+		background-color: var(--grey2);
+		color: var(--grey5);
 		cursor: default;
+		box-shadow: none;
+		transform: none !important;
 	}
 	&.primary:not(:disabled) {
 		background-color: var(--artist4);
-		color: var(--grey0);
+		color: #080c00;
 		border-color: var(--artist4);
+		box-shadow: 0 4px 0 var(--artist5), 0 0 20px var(--artistshade);
+
 		@media (any-hover: hover) {
 			&:hover {
 				background-color: var(--artist3);
 				border-color: var(--artist3);
+				transform: translateY(-2px);
+				box-shadow: 0 6px 0 var(--artist5), 0 0 32px var(--artistshade);
 			}
 		}
 		&:active {
-			background-color: var(--artist5);
-			border-color: var(--artist5);
+			transform: translateY(4px);
+			box-shadow: none;
 		}
 	}
 	&.secondary:not(:disabled) {
-		background-color: var(--grey0);
-		color: var(--blue4);
+		background-color: transparent;
+		color: var(--blue3);
 		border-color: var(--blue4);
+		box-shadow: 0 4px 0 var(--blue5);
+
 		@media (any-hover: hover) {
 			&:hover {
-				color: var(--blue3);
+				color: var(--blue2);
 				border-color: var(--blue3);
+				transform: translateY(-2px);
+				box-shadow: 0 6px 0 var(--blue5);
 			}
 		}
 		&:active {
-			color: var(--blue5);
-			border-color: var(--blue5);
+			transform: translateY(4px);
+			box-shadow: none;
 		}
 	}
 	&.tertiary {
-		color: var(--blue4);
+		color: var(--blue3);
 		background: none;
 		border-radius: 0;
 		border: hidden;
@@ -61,40 +75,61 @@
 		padding: 0 2px;
 		line-height: 20px;
 		min-width: 0;
+		text-transform: none;
+		letter-spacing: 0.03em;
+		font-size: 15px;
+		font-weight: 700;
+		box-shadow: none;
+
 		@media (any-hover: hover) {
 			&:hover {
-				color: var(--blue3);
+				color: var(--blue2);
 				border-bottom: solid 2px var(--blue3);
+				transform: none;
 			}
 		}
 		&:active {
 			color: var(--blue5);
 			border-bottom: solid 2px var(--blue5);
+			transform: none;
+			box-shadow: none;
 		}
 	}
 }
 
-input[type="text"],
-input[type="tel"],
-input[type="number"] {
+input[type='text'],
+input[type='tel'],
+input[type='number'] {
 	border-style: hidden;
-	border-bottom: solid 2px;
-	border-bottom-color: var(--artist4);
+	border-bottom: solid 3px var(--artist4);
 	background-color: var(--grey1);
 	line-height: 40px;
 	text-align: center;
 	margin: 8px;
 	color: var(--grey7);
-	font-weight: 500;
+	font-weight: 700;
+	font-family: var(--body-font);
+	font-size: 16px;
+	border-radius: 0;
+	transition: background-color 0.15s, border-bottom-color 0.15s;
+
 	&::placeholder {
-		opacity: 0.5;
+		color: var(--grey5);
+		opacity: 1;
+		font-weight: 600;
+	}
+
+	&:focus {
+		outline: none;
+		border-bottom-color: var(--artist3);
+		background-color: var(--grey2);
 	}
 }
 
 @media screen and (max-width: 425px) {
 	#in-game {
 		.btn {
-			padding: 0 5px;
+			padding: 0 6px;
 			margin: 5px;
 
 			&.primary:not(.big),
