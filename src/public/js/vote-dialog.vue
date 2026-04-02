@@ -39,7 +39,7 @@
 					<button
 						v-show="myVote"
 						class="btn primary"
-						@click="$emit('submit-vote', myVote)"
+						@click="submitted = true; $emit('submit-vote', myVote)"
 					>
 						Vote for {{ myVote }}
 					</button>
@@ -69,11 +69,12 @@ export default {
 	data() {
 		return {
 			myVote: null,
+			submitted: false,
 		};
 	},
 	computed: {
 		hasVoted() {
-			return this.myVote !== null;
+			return this.submitted;
 		},
 		otherUsers() {
 			return this.users.filter((u) => u.name !== this.myName);
@@ -82,11 +83,13 @@ export default {
 	watch: {
 		users() {
 			this.myVote = null;
+			this.submitted = false;
 		},
 	},
 	methods: {
 		resetAndClose() {
 			this.myVote = null;
+			this.submitted = false;
 			this.$emit('close');
 		},
 	},

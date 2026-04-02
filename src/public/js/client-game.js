@@ -18,6 +18,7 @@ function generateClientGameState() {
 		customTopics: [],
 		useCustomTopicsOnly: false,
 		roundResults: [],
+		lastRoundResult: null,
 
 		getUsernames() {
 			return this.users.map((u) => u.name);

@@ -144,15 +144,20 @@ handleSocket(MESSAGE.USER_LEFT);
 handleSocket(MESSAGE.START_GAME);
 handleSocket(MESSAGE.NEW_TURN);
 handleSocket(MESSAGE.RETURN_TO_SETUP);
+handleSocket(MESSAGE.ADD_CUSTOM_TOPIC);
+handleSocket(MESSAGE.REMOVE_CUSTOM_TOPIC);
+handleSocket(MESSAGE.TOGGLE_CUSTOM_TOPICS);
 handleSocket(
 	MESSAGE.VOTE_RESULT,
 	function(data) {
+		// roundResult is embedded in roomState by broadcastRoomState
+		const roundResult = data.roundResult || (data.roomState && data.roomState.roundResult);
 		// Apply room state directly without auto-routing
 		if (data.roomState && Store.state.gameState) {
 			Store.state.gameState.adoptJson(data.roomState);
 		}
 		// Trigger round result dialog via event stored on gameState
-		Store.onRoundResult(data.roundResult);
+		Store.onRoundResult(roundResult);
 	}
 );
 
