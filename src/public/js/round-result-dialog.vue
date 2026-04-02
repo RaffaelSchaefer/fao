@@ -34,7 +34,7 @@
 								:key="entry.name"
 							>
 								<td class="rank">#{{ entry.rank }}</td>
-								<td :style="{ color: entry.color }">{{ entry.name }}</td>
+								<td :style="{ color: getUserColor(entry.name) }">{{ entry.name }}</td>
 								<td>{{ entry.points > 0 ? '+' : '' }}{{ entry.points }}</td>
 								<td class="score-total"><strong>{{ entry.total }}</strong></td>
 							</tr>
@@ -64,20 +64,32 @@ export default {
 	},
 	computed: {
 		sortedScores() {
+			let entries = this.users.map((u) => ({
+				name: u.name,
+				points: this.roundResult && this.roundResult.pointsAwarded ? (this.roundResult.pointsAwarded[u.name] || 0) : 0,
+				total: this.scores[u.name] || 0,
+			}));
+			entries.sort((a, b) => b.total - a.total);
+			entries.forEach((e, i) => {
+				if (i > 0 && e.total === entries[i - 1].total) {
+					e.rank = entries[i - 1].rank;
+				} else {
+					e.rank = i + 1;
+				}
+			});
+			return entries;
+		},
+	},
+	methods: {
+		getUserColor(name) {
 			const COLORS = [
 				'#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
 				'#1abc9c', '#e67e22', '#e91e63', '#00bcd4', '#8bc34a',
 			];
-			const usernames = this.users.map((u) => u.name);
-			let entries = this.users.map((u, i) => ({
-				name: u.name,
-				points: this.roundResult && this.roundResult.pointsAwarded ? (this.roundResult.pointsAwarded[u.name] || 0) : 0,
-				total: this.scores[u.name] || 0,
-				color: COLORS[i % COLORS.length] || 'var(--grey6)',
-			}));
-			entries.sort((a, b) => b.total - a.total);
-			entries.forEach((e, i) => { e.rank = i + 1; });
-			return entries;
+			// Consistent color assignment per player name across all rounds
+			let hash = 0;
+			for (let c of name) { hash = ((hash << 5) - hash) + c.charCodeAt(0); }
+			return COLORS[Math.abs(hash) % COLORS.length] || 'var(--grey6)';
 		},
 	},
 };

@@ -1,5 +1,5 @@
 <template>
-	<div id="vote-dialog" class="dialog-overlay" @click.self="$emit('close')">
+	<div id="vote-dialog" class="dialog-overlay" @click.self="resetAndClose">
 		<div class="dialog">
 			<div class="dialog-header">
 				<h2>Vote for the Faker</h2>
@@ -31,7 +31,7 @@
 				<template v-if="!hasVoted">
 					<button
 						class="btn secondary"
-						@click="$emit('close')"
+						@click="resetAndClose"
 						v-show="!myVote"
 					>
 						Cancel
@@ -79,7 +79,16 @@ export default {
 			return this.users.filter((u) => u.name !== this.myName);
 		},
 	},
+	watch: {
+		users() {
+			this.myVote = null;
+		},
+	},
 	methods: {
+		resetAndClose() {
+			this.myVote = null;
+			this.$emit('close');
+		},
 	},
 };
 </script>

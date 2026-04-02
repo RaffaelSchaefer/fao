@@ -56,6 +56,9 @@ class GameRoom {
 	}
 	dropUser(user) {
 		let idx = this.users.indexOf(user);
+		if (idx === -1) {
+			return this.users.length;
+		}
 		this.users.splice(idx, 1);
 		return this.users.length;
 	}
@@ -102,6 +105,10 @@ class GameRoom {
 		Util.shuffle(this.users);
 	}
 	addStroke(username, points) {
+		let maxPoints = 500;
+		if (points.length > maxPoints) {
+			points = points.slice(0, maxPoints);
+		}
 		this.strokes.push(new Stroke(username, points));
 		return this.strokes;
 	}
@@ -156,9 +163,11 @@ class GameRoom {
 	}
 
 	allVotesIn() {
-		for (let u of this.users) {
-			// Skip disconnected users — they can't vote
-			if (!u.connected) continue;
+		let connectedUsers = this.users.filter((u) => u.connected);
+		// If there are zero or one connected users (e.g., 1-player game where the only
+		// player is the faker with nobody to vote for), skip voting and go straight to results
+		if (connectedUsers.length <= 1) return true;
+		for (let u of connectedUsers) {
 			if (this.votes[u.name] === undefined) {
 				return false;
 			}
@@ -254,6 +263,7 @@ const ClientAdapter = {
 
 		let res = {
 			roomCode: gameRoom.roomCode,
+			hostName: gameRoom.host ? gameRoom.host.name : null,
 			users: _.map(gameRoom.users, (u) => ({
 				name: u.name,
 				connected: u.connected,

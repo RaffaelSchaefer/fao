@@ -34,6 +34,7 @@
 				v-if="state.view === 'setup'"
 				:room-code="state.gameState === undefined ? undefined : state.gameState.roomCode"
 				:usernames="usernames"
+				:game-state="state.gameState"
 			></setup-view>
 
 			<game-view

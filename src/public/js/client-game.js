@@ -3,6 +3,7 @@ import * as Color from './player-colors';
 function generateClientGameState() {
 	return {
 		roomCode: undefined,
+		hostName: null,
 		users: [],
 		scores: {},
 		round: undefined,

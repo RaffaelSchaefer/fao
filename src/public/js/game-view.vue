@@ -145,6 +145,7 @@ const Dialogs = {
 	SKIP_ROUND: 'SKIP_ROUND',
 	SETUP: 'SETUP',
 	VOTE: 'VOTE',
+	ROUND_RESULT: 'ROUND_RESULT',
 };
 
 const strokeTracker = {
@@ -230,18 +231,25 @@ export default {
 		};
 	},
 	computed: {
+		username() {
+			return Store.state.username;
+		},
 		promptText() {
+			if (!this.gameState) return '';
 			return `${this.gameState.hint}: ${this.gameState.keyword}`;
 		},
 		whoseTurnText() {
+			if (!this.gameState) return '';
 			return this.gameState.phase === GAME_PHASE.VOTE
 				? 'Time to vote!'
 				: `${this.gameState.whoseTurn}'s turn`;
 		},
 		userColor() {
+			if (!this.gameState) return 'var(--grey6)';
 			return this.gameState.getUserColor(this.gameState.whoseTurn);
 		},
 		isRoundOver() {
+			if (!this.gameState) return false;
 			return this.gameState.phase === GAME_PHASE.VOTE;
 		},
 		isVotingPhase() {

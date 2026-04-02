@@ -32,7 +32,7 @@ SCHEMA[MESSAGE.JOIN_ROOM] = {
 			maxLength: usernameMaxLength,
 		},
 		roomCode: {
-			type: ['string', 'number'],
+			type: 'string',
 			minLength: 1,
 		},
 	},
@@ -58,14 +58,19 @@ SCHEMA[MESSAGE.SUBMIT_STROKE] = {
 				properties: {
 					x: {
 						type: 'number',
+						minimum: -100,
+						maximum: 100,
 					},
 					y: {
 						type: 'number',
+						minimum: -100,
+						maximum: 100,
 					},
 				},
 				required: ['x', 'y'],
 			},
 			minItems: 2,
+			maxItems: 500,
 		},
 	},
 	required: ['points'],

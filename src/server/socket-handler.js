@@ -7,7 +7,6 @@ import GamePrecond from './game-precond';
 import { ClientAdapter } from './game-room.js';
 import * as Lobby from './lobby.js';
 import * as Schema from './schema.js';
-
 function handleSockets(io) {
 	io.on('connection', function(sock) {
 		debugLog('Socket connected: ' + sock.id);
@@ -93,6 +92,14 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
+		if (rm.phase !== GAME_PHASE.SETUP) {
+			sock.emit(MESSAGE.START_GAME, { err: 'Game can only be started from setup phase' });
+			return;
+		}
+		if (rm.host.name !== sock.user.name) {
+			sock.emit(MESSAGE.START_GAME, { err: 'Only the host can start the game' });
+			return;
+		}
 		rm.startNewRound();
 		broadcastRoomState(io, rm, MESSAGE.START_GAME);
 	},
@@ -100,6 +107,10 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
+		if (rm.phase !== GAME_PHASE.VOTE) {
+			sock.emit(MESSAGE.NEXT_ROUND, { err: 'Can only go to next round after vote result phase' });
+			return;
+		}
 		rm.startNewRound();
 		broadcastRoomState(io, rm, MESSAGE.START_GAME);
 	},

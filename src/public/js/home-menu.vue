@@ -132,7 +132,7 @@ export default {
 	},
 	watch: {
 		'store.username'(val) {
-			Store.setUsername(val);
+			Store.setUsername(val ? val.trim() : val);
 		},
 	},
 };

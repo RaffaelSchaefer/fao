@@ -3,7 +3,7 @@ import { validateUsername } from '../common/util.js';
 class User {
 	constructor(socket, name) {
 		if(!validateUsername(name)) {
-			return undefined;
+			throw new Error(`Invalid username: "${name}"`);
 		}
 
 		this.socket = socket;
