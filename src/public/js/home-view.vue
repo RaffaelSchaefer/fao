@@ -1,6 +1,6 @@
 <template>
-	<div id="home" class="view">
-		<div class="view-container">
+	<div id="home" class="view relative z-10">
+		<div class="view-container mx-auto w-full max-w-3xl px-4">
 			<div id="title-banner" class="stripe align-center">
 				<div class="stripe-content">
 					<div class="p5-pre-title">◆ PARTY DRAWING GAME</div>

@@ -32,7 +32,7 @@ The old webpack/Vue 2/Babel toolchain is gone from the build path. `src/` is now
 
 ## Remaining Cleanup
 
-- Remove the Sass `@import` warnings in [src/public/style/style.scss](/Users/raffaelschaefer/Projekte/Privat/fao/src/public/style/style.scss)
+- Keep trimming the Tailwind-based CSS layer as the last SCSS-free cleanup pass
 - Decide whether to rename `readme.md` to `README.md` for consistency
 - Consider adding one more browser spec for mid-game stroke submission if realtime regressions start reappearing
 

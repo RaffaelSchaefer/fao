@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite-plus';
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-	plugins: [vue()],
+	plugins: [tailwindcss(), vue()],
 	publicDir: resolve(rootDir, 'src/public/static'),
 	resolve: {
 		alias: {

@@ -1,6 +1,6 @@
 <template>
-	<div id="in-game" class="view">
-		<div class="view-container">
+	<div id="in-game" class="view relative z-10">
+		<div class="view-container mx-auto w-full max-w-5xl px-4">
 			<room-info
 				v-show="currentDialog === 'ROOM_INFO'"
 				:users="gameState.users"

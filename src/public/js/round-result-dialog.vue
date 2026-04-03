@@ -5,11 +5,6 @@
 				<h2>Round {{ roundResult ? roundResult.round : '' }} Results</h2>
 			</div>
 
-			<!-- Skip animation button -->
-			<button v-if="!revealComplete" class="btn secondary skip-reveal" @click="skipReveal">
-				Skip
-			</button>
-
 			<div class="dialog-body">
 				<!-- Faker reveal -->
 				<div class="p5-faker-panel reveal-element" style="--delay: 0.4s">
@@ -120,9 +115,6 @@ export default defineComponent({
 		},
 	},
 	methods: {
-		skipReveal(): void {
-			this.revealComplete = true;
-		},
 		getUserColor(name: string): string {
 			const COLORS = [
 				'#e74c3c',
@@ -173,6 +165,9 @@ export default defineComponent({
 }
 
 .dialog-wide {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 	border-radius: 0;
 	border-left: 4px solid var(--artist4);
 	background: var(--grey1);
@@ -181,8 +176,11 @@ export default defineComponent({
 	border-bottom: 1px solid var(--grey3);
 	max-width: 520px;
 	width: 100%;
+	max-height: calc(100dvh - 40px);
 	padding: 16px 20px;
 	position: relative;
+	box-sizing: border-box;
+	overflow: hidden;
 }
 
 /* P5 faker panel */
@@ -243,6 +241,12 @@ export default defineComponent({
 	margin-top: 12px;
 }
 
+.dialog-body {
+	min-height: 0;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
 .scoreboard h3 {
 	margin: 0 0 8px;
 	font-family: var(--display-font);
@@ -300,6 +304,8 @@ export default defineComponent({
 	display: flex;
 	justify-content: center;
 	gap: 8px;
+	flex-wrap: wrap;
+	padding-top: 4px;
 }
 
 /* ============================================================================
@@ -320,28 +326,12 @@ export default defineComponent({
 	animation: reveal-row 0.35s cubic-bezier(0.22, 1, 0.36, 1) var(--row-delay, 1.7s) both;
 }
 
-/* Skip button */
-.skip-reveal {
-	position: absolute;
-	top: 12px;
-	right: 12px;
-	font-size: 11px;
-	padding: 4px 10px;
-	opacity: 1;
-	animation: reveal-fade 0.3s ease 0.2s both;
-	z-index: 20;
-}
-
 /* After reveal: show everything normally */
 #round-result-dialog.reveal-done .reveal-element,
 #round-result-dialog.reveal-done .reveal-row {
 	opacity: 1;
 	transform: none;
 	animation: none;
-}
-
-#round-result-dialog.reveal-done .skip-reveal {
-	display: none;
 }
 
 @keyframes reveal-slide {
@@ -366,8 +356,4 @@ export default defineComponent({
 	}
 }
 
-@keyframes reveal-fade {
-	from { opacity: 0; }
-	to   { opacity: 0.6; }
-}
 </style>

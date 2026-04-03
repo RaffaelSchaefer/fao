@@ -1,6 +1,6 @@
 <template>
-	<div id="room-setup" class="view">
-		<div class="view-container">
+	<div id="room-setup" class="view relative z-10">
+		<div class="view-container mx-auto w-full max-w-4xl px-4">
 			<Confirmation
 				id="confirm-leave"
 				confirmText="Leave"
@@ -458,6 +458,7 @@ export default defineComponent({
 	background: var(--grey1);
 	border: 2px solid var(--grey3);
 	border-left: 4px solid var(--grey4);
+	border-bottom: 0;
 	color: var(--grey6);
 	font-family: var(--button-font);
 	font-size: 14px;

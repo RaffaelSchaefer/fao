@@ -7,7 +7,7 @@ This file provides guidance to Claude Code when working in this repository.
 **Fake Artist Online** is a multiplayer party game based on _A Fake Artist Goes to New York_.
 The current stack is:
 
-- **Vue 3** with TypeScript and Vite+
+- **Vue 3** with TypeScript, Tailwind CSS, and Vite+
 - **Express** + **Socket.IO 4**
 - **Node 22+**
 - **Vitest** for server/unit tests
@@ -51,7 +51,7 @@ src/
 ├── public/
 │   ├── js/          # Vue SFCs, client state, drawing helpers
 │   ├── static/      # Static assets served as-is
-│   └── style/       # Global styles and SCSS
+│   └── style/       # Global styles and Tailwind-driven CSS
 └── server/          # Express, Socket.IO, lobby, game-room, schema
 test/
 ├── e2e/             # Playwright browser tests

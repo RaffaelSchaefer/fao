@@ -1,6 +1,6 @@
 <template>
-	<div id="faq" class="view">
-		<div class="view-container">
+	<div id="faq" class="view relative z-10">
+		<div class="view-container mx-auto w-full max-w-3xl px-4">
 			<div class="stripe">
 				<div id="faq-content" class="stripe-content normal-text">
 					<div class="align-left">

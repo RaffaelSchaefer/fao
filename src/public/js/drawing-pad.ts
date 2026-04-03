@@ -1,6 +1,7 @@
 import Layer, { type LayerName } from './layer.js';
 import RelativePoint from '../../common/relative-point.js';
 
+// Keep the drawing surface tall so the canvas feels like a portrait pad.
 const HEIGHT_RATIO = 8 / 6;
 const MAX_CANVAS_W = 650;
 const MAX_CANVAS_H = MAX_CANVAS_W * HEIGHT_RATIO;

@@ -1,6 +1,6 @@
 <template>
-	<div id="rules" class="view">
-		<div class="view-container">
+	<div id="rules" class="view relative z-10">
+		<div class="view-container mx-auto w-full max-w-3xl px-4">
 			<div class="stripe">
 				<div id="rules-content" class="stripe-content normal-text">
 					<div class="align-left">

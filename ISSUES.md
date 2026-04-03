@@ -291,32 +291,17 @@ Strokes are only reset on `startNewRound()`. In abandoned PLAY phase games, the 
 
 ### M6. Deprecated Sass @import Syntax
 
-**Severity:** Medium
-**File:** `src/public/style/style.scss:348-351`
+**Status:** Resolved in the Tailwind migration.
 
-Build output shows `DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.`
-
-```scss
-@import 'colors';
-@import 'input';
-@import 'dropup';
-@import 'dialog';
-```
-
-**Impact:** Build will break with future Sass versions.
+The old SCSS entrypoint and its `@import` chain have been removed. The current stylesheet is plain CSS with Tailwind imported at the top.
 
 ---
 
 ### M7. Deprecated Legacy JS API for Sass
 
-**Severity:** Medium
-**Build Output:** Multiple deprecation warnings
+**Status:** Resolved in the Tailwind migration.
 
-```
-DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
-```
-
-**Impact:** Build will break with Dart Sass 2.0.0.
+Sass is no longer part of the build, so the legacy Sass JS API warnings no longer apply.
 
 ---
 
@@ -466,7 +451,7 @@ Test Suite
 
 ### B1. Legacy Build Stack Has Been Replaced
 
-The repo has already moved off the old webpack/Babel stack. The remaining build warnings come from Sass `@import` deprecations in the stylesheet layer, not from webpack.
+The repo has already moved off the old webpack/Babel stack. The stylesheet layer now uses plain CSS plus Tailwind, so the old Sass warning no longer applies.
 
 ### B2. Server Compilation Is Now TypeScript-Based
 

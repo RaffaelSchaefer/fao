@@ -1,5 +1,5 @@
 <template>
-	<div id="wrapper">
+	<div id="wrapper" class="relative h-screen overflow-hidden">
 		<home-view v-if="state.view === 'home'"></home-view>
 		<rules-view v-if="state.view === 'rules'"></rules-view>
 		<faq-view v-if="state.view === 'faq'"></faq-view>

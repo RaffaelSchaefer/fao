@@ -5,6 +5,7 @@ An online party game based on Oink Games' tabletop game, _A Fake Artist Goes to 
 ## Stack
 
 - Vue 3 + TypeScript
+- Tailwind CSS
 - Vite+
 - Express
 - Socket.IO 4
