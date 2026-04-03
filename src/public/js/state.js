@@ -251,7 +251,15 @@ socket.on('disconnect', function() {
 			case GAME_PHASE.PLAY:
 			case GAME_PHASE.VOTE:
 				if (me) {
-					me.connected = false;
+					// Create a new user object with updated connected status to trigger Vue reactivity
+					const users = [...existingGameState.users];
+					const userIndex = users.findIndex(u => u.name === me.name);
+					if (userIndex !== -1) {
+						users[userIndex] = { ...me, connected: false };
+						// Replace the entire gameState to trigger reactivity
+						const newGameState = { ...existingGameState, users };
+						this.setGameState(newGameState);
+					}
 				}
 				break;
 			default:

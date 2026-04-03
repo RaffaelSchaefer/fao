@@ -12,7 +12,7 @@ function loadPrompts() {
 		fs.readFile(filename, function(err, fileData) {
 			parse(fileData, { columns: true, trim: true }, function(err, output) {
 				if (err) {
-					throw err;
+					reject(err);
 				} else {
 					prompts = output;
 					validatePromptHeaders(prompts);

@@ -22,6 +22,7 @@ function triggerDelayedRoomTeardown(room) {
 	}, TEARDOWN_DELAY_MS);
 }
 function teardownRoom(room) {
+	room.stopTimedTurn(); // Clear any active timers to prevent memory leaks
 	rooms.delete(room.roomCode);
 	console.log(`Rm${room.roomCode} teardown. Last round: ${room.round}. Room count: ${rooms.size}`);
 }

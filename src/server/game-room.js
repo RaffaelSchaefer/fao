@@ -64,7 +64,24 @@ class GameRoom {
 		if (idx === -1) {
 			return this.users.length;
 		}
+		const wasHost = this.host && this.host.name === user.name;
 		this.users.splice(idx, 1);
+
+		// If the dropped user was the host, elect a new host from remaining connected users
+		if (wasHost && this.users.length > 0) {
+			// Find the first connected user to be the new host
+			for (let i = 0; i < this.users.length; i++) {
+				if (this.users[i].connected) {
+					this.host = this.users[i];
+					break;
+				}
+			}
+			// If no connected users found, host remains undefined (will be handled by room teardown)
+		} else if (wasHost && this.users.length === 0) {
+			// No users left, host becomes undefined
+			this.host = undefined;
+		}
+
 		return this.users.length;
 	}
 	findUser(name) {

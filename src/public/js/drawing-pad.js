@@ -60,8 +60,9 @@ const drawingPad = {
 	},
 
 	getRelativePointFromPointerEvent(e) {
-		let pointerX = e.pageX - this.canvasDiv.offsetLeft;
-		let pointerY = e.pageY - this.canvasDiv.offsetTop;
+		const rect = this.canvasDiv.getBoundingClientRect();
+		let pointerX = e.clientX - rect.left;
+		let pointerY = e.clientY - rect.top;
 		let relPt = new RelativePoint(pointerX / this.canvasWidth, pointerY / this.canvasHeight);
 		return relPt;
 	},

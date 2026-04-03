@@ -2,7 +2,7 @@
 
 ## Summary
 
-Add scoreboard with persistent scoring, voting UI, custom topics (already shipped on this branch), plus new features: achievements, dramatic reveals, rematch button, timed sketch mode, player stats, and room passwords. Transform from "solid drawing game" into a sticky party game with replay loops.
+Add scoreboard with persistent scoring, voting UI, custom topics, dramatic reveal, and timed sketch mode (already shipped on this branch). Remaining features: achievements, rematch button, player stats, room passwords. Transform from "solid drawing game" into a sticky party game with replay loops.
 
 ---
 
@@ -13,9 +13,9 @@ Add scoreboard with persistent scoring, voting UI, custom topics (already shippe
 | Sub-problem | Existing code | Gap |
 |---|---|---|
 | Cumulative scoring | `game-room.js: scores`, `calculateScores()` | No per-session/long-term persistence |
-| Round results display | `round-result-dialog.vue` | No dramatic animation sequence |
+| Round results display | `round-result-dialog.vue` | **DONE** -- dramatic staggered CSS animation shipped |
 | Dialog system | `currentDialog` pattern in `game-view.vue` | No achievement, stats, settings dialogs |
-| Game modes | Single mode via `phase` enum | No mode enum (timed vs classic) |
+| Game modes | `gameMode: 'classic' | 'timed'` in `game-room.js` | **DONE** -- timed mode shipped (15s timer, server-side) |
 | Session identity | `state.js` localStorage for username | No stats, achievements, cosmetics |
 | Rematch flow | `NEXT_ROUND` + `RETURN_TO_SETUP` | Requires clicking "Next Round" manually from result |
 | Access control | Room codes only | No passwords for private games |
@@ -24,14 +24,13 @@ Add scoreboard with persistent scoring, voting UI, custom topics (already shippe
 
 ```
 CURRENT (shipped on Upgraded-Version)
-  Draws one round. Votes. Sees scores. Adds custom topics. That's it.
+  Draws one round. Votes. Sees scores. Custom topics.
+  Dramatic reveal with staggered CSS animation. Timed sketch mode (15s).
      |
      V
-THIS PLAN (feature expansion)
+THIS PLAN (remaining features)
   + Achievements with toasts during gameplay
-  + Dramatic faker reveal with suspense animation
   + One-click rematch
-  + Timed sketch mode (toggle in setup)
   + Player stats dashboard on home screen
   + Room passwords for private games
      |
@@ -98,11 +97,11 @@ The round-result-dialog already exists. Add a staggered CSS animation that revea
 
 ## Implementation Steps
 
-### Steps 1-5: Original Plan (ALREADY SHIPPED)
+### Steps 1-7: Original Plan (ALREADY SHIPPED)
 
-Scoreboard, voting, custom topics -- these are implemented on the `Upgraded-Version` branch already. Kept here for reference only.
+Scoreboard, voting, custom topics, dramatic faker reveal, and timed sketch mode are implemented on the `Upgraded-Version` branch already. Kept here for reference only.
 
-### Step 6: Achievements System
+### Step 8: Achievements System
 
 **`src/common/message.js`** -- Add:
 - `ACHIEVEMENT_UNLOCKED` -- server -> client: { name, icon, description }
@@ -126,18 +125,11 @@ Scoreboard, voting, custom topics -- these are implemented on the `Upgraded-Vers
 - Achievement toast component (small, auto-dismiss, bottom-center)
 - Queue multiple achievements, show one at a time with 3s gap
 
-### Step 7: Dramatic Faker Reveal
+### Step 8 (reference only): Dramatic Faker Reveal -- SHIPPED
 
-**`src/public/js/round-result-dialog.vue`** -- Enhance:
-- Replace instant reveal with staggered animation:
-  1. Darken background briefly (500ms)
-  2. Show player names one-by-one with "NOT THE FAKER" text (300ms each)
-  3. Pause, then reveal faker with dramatic styling
-  4. If faker survived: show "GOT AWAY!" badge on their drawing/strokes
-- Use CSS `transition` and `setTimeout` -- no animation library needed
-- Add a "skip animation" button for impatient players (shows all at once after 1s delay)
+Implemented via staggered CSS animations in `round-result-dialog.vue`. Elements use `reveal-element` class with `--delay` CSS variables, keyframe animations (`reveal-slide`, `reveal-row`, `reveal-fade`), a skip button, and auto-complete timer. No further work needed.
 
-### Step 8: Rematch Button
+### Step 9: Rematch Button
 
 **`src/common/message.js`** -- Add:
 - `REQUEST_REMATCH` -- client -> server
@@ -158,38 +150,11 @@ Scoreboard, voting, custom topics -- these are implemented on the `Upgraded-Vers
 - `submitRematch()` action
 - Socket handler for `REMATCH_STARTED`
 
-### Step 9: Timed Sketch Mode
+### Step 10 (reference only): Timed Sketch Mode -- SHIPPED
 
-**`src/server/game-room.js`** -- Add:
-- `gameMode: 'classic' | 'timed'` (default: classic)
-- `turnTimer: null` and `turnTimeRemaining: number`
-- `startTimedTurn()` -- starts 30-second countdown, auto-advances when timer hits 0
-- In `nextTurn()`, if timed mode, clear old timer and start new one
-- `startNewRound()` -- resets timer
-- When timer expires: `nextTurn()` is called automatically
+Fully implemented end-to-end: `gameMode` ('classic'|'timed') in `game-room.js`, `startTimedTurn()` with 15s countdown, `SET_GAME_MODE` + `TURN_TIMER_UPDATE` messages, timer display with urgency states in `game-view.vue`, mode selector in `setup-view.vue`. No further work needed.
 
-**`src/server/schema.js`** -- Add:
-- `SET_GAME_MODE` -- requires { mode: 'classic' | 'timed' }
-
-**`src/common/message.js`** -- Add:
-- `SET_GAME_MODE` -- client -> server (host only)
-- `TURN_TIMER_UPDATE` -- server -> client: { remaining: number }
-- `GAME_MODE_CHANGED` -- server -> client
-
-**`src/public/js/setup-view.vue`** -- Add:
-- Game mode selector: radio buttons "Classic (2 strokes)" vs "Timed (30 seconds)"
-- Visible to all players, configurable by host only
-
-**`src/public/js/game-view.vue`** -- Add:
-- Turn timer display (circular countdown or progress bar) when in timed mode
-- When timer < 5s, visual urgency (pulse or color change)
-- Auto-submit stroke when timer expires (if drawing), auto-advance if already submitted
-
-**`src/public/js/state.js`** -- Add:
-- `submitSetGameMode(mode)` action
-- Socket handler for `TURN_TIMER_UPDATE` and `GAME_MODE_CHANGED`
-
-### Step 10: Player Stats Dashboard
+### Step 11: Player Stats Dashboard
 
 **`src/public/js/home-view.vue`** -- Add:
 - "Stats" section (toggleable, like custom topics accordion)
@@ -213,7 +178,7 @@ Scoreboard, voting, custom topics -- these are implemented on the `Upgraded-Vers
 **`src/public/js/home-menu.vue`** -- Add:
 - "Stats" button alongside Create/Join/Rules/FAQ
 
-### Step 11: Room Passwords
+### Step 12: Room Passwords
 
 **`src/server/lobby.js`** -- Add:
 - `createRoom(code, password?)` -- rooms can optionally have a password
@@ -242,36 +207,49 @@ Scoreboard, voting, custom topics -- these are implemented on the `Upgraded-Vers
 - Password passed with `createRoom` and `joinRoom` actions
 - `JOIN_ERROR` handler shows error message
 
-### Step 12: Tests
+### Step 13: Tests
 
 **`test/test.js`** -- Add:
 - Achievement unlock tests (conditions met, multiple achievements, localStorage persistence)
-- Timed mode tests (timer auto-advances, timer desync handling, mode switch)
 - Rematch tests (host-only, scores preserved, new round starts)
 - Password tests (correct password accepted, wrong password rejected, no password still works)
 - Stats tests (increments after round, localStorage persistence)
+- Timed mode tests (already implemented -- verify timer auto-advances, mode switch)
 
 ## Files Modified
 
 ### New Files
 - (none beyond existing vote-dialog.vue and round-result-dialog.vue)
 
-### Modified Files (Server)
-- `src/server/game-room.js` -- gameMode, timer, rematch, password, achievement checks
-- `src/server/socket-handler.js` -- rematch, gameMode, password join validation
-- `src/server/schema.js` -- gameMode, password schemas
+### Modified Files (Server) -- REMAINING
+- `src/server/game-room.js` -- rematch, password, achievement checks
+- `src/server/socket-handler.js` -- rematch, password join validation
+- `src/server/schema.js` -- password schemas
 - `src/server/lobby.js` -- password on room creation
 
-### Modified Files (Client)
-- `src/public/js/game-view.vue` -- achievement toast, timer display
-- `src/public/js/round-result-dialog.vue` -- dramatic reveal, rematch button
-- `src/public/js/setup-view.vue` -- game mode selector
+### Modified Files (Client) -- REMAINING
+- `src/public/js/game-view.vue` -- achievement toast
+- `src/public/js/round-result-dialog.vue` -- rematch button
 - `src/public/js/home-view.vue` -- stats dashboard
 - `src/public/js/home-menu.vue` -- password UI, stats button
-- `src/public/js/state.js` -- achievements, stats, rematch, game mode, password actions
+- `src/public/js/state.js` -- achievements, stats, rematch, password actions
 
-### Modified Files (Shared)
-- `src/common/message.js` -- ACHIEVEMENT_UNLOCKED, SET_GAME_MODE, TURN_TIMER_UPDATE, GAME_MODE_CHANGED, REQUEST_REMATCH, REMATCH_STARTED, JOIN_ERROR
+### Modified Files (Shared) -- REMAINING
+- `src/common/message.js` -- ACHIEVEMENT_UNLOCKED, REQUEST_REMATCH, REMATCH_STARTED, JOIN_ERROR
+
+### Modified Files (Server) -- SHIPPED
+- `src/server/game-room.js` -- gameMode, timer (+ already done)
+- `src/server/socket-handler.js` -- SET_GAME_MODE handler (+ already done)
+- `src/server/schema.js` -- SET_GAME_MODE schema (+ already done)
+
+### Modified Files (Client) -- SHIPPED
+- `src/public/js/game-view.vue` -- timer display (+ already done)
+- `src/public/js/setup-view.vue` -- game mode selector (+ already done)
+- `src/public/js/round-result-dialog.vue` -- dramatic reveal (+ already done)
+- `src/public/js/client-game.js` -- gameMode, turnTimeRemaining (+ already done)
+
+### Modified Files (Shared) -- SHIPPED
+- `src/common/message.js` -- SET_GAME_MODE, TURN_TIMER_UPDATE (+ already done)
 
 ## Data Flow (Expanded)
 

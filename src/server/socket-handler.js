@@ -16,7 +16,6 @@ function handleSockets(io) {
 					Schema.validateMessageFromClient(messageName, data);
 					MessageHandlers[messageName](io, sock, data);
 				} catch (e) {
-					// REMEMBER, any code/mutations inside the try before the error do still execute
 					if (e.name === GameError.name) {
 						sock.emit(messageName, {
 							err: e.clientMessage,
@@ -96,7 +95,8 @@ const MessageHandlers = {
 			sock.emit(MESSAGE.START_GAME, { err: 'Game can only be started from setup phase' });
 			return;
 		}
-		if (rm.host.name !== sock.user.name) {
+		// Enhanced host validation: check both name and socket ID
+		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
 			sock.emit(MESSAGE.START_GAME, { err: 'Only the host can start the game' });
 			return;
 		}
@@ -123,15 +123,13 @@ const MessageHandlers = {
 		let rm = sock.user.gameRoom;
 		rm.addStroke(sock.user.name, data.points);
 		rm.nextTurn(io, () => broadcastRoomState(io, rm, MESSAGE.NEW_TURN));
-
-		broadcastRoomState(io, rm, MESSAGE.NEW_TURN);
 	},
 
 	[MESSAGE.SET_GAME_MODE](io, sock, data) {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
-		if (rm.host.name !== sock.user.name) {
+		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
 			sock.emit(MESSAGE.SET_GAME_MODE, { err: 'Only the host can change game mode' });
 			return;
 		}
@@ -180,7 +178,7 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
-		if (rm.host.name !== sock.user.name) {
+		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
 			sock.emit(MESSAGE.ADD_CUSTOM_TOPIC, { err: 'Only the host can add topics' });
 			return;
 		}
@@ -192,7 +190,7 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
-		if (rm.host.name !== sock.user.name) {
+		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
 			sock.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, { err: 'Only the host can remove topics' });
 			return;
 		}
@@ -204,7 +202,7 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
-		if (rm.host.name !== sock.user.name) {
+		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
 			sock.emit(MESSAGE.TOGGLE_CUSTOM_TOPICS, { err: 'Only the host can toggle topics' });
 			return;
 		}
