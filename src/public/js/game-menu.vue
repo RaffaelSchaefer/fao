@@ -6,7 +6,11 @@
 			:class="{ expanded: expanded === true }"
 			@click="toggle"
 		>
-			<more-vertical-icon />
+			<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+				<circle cx="5" cy="12" r="2" fill="currentColor" />
+				<circle cx="12" cy="12" r="2" fill="currentColor" />
+				<circle cx="19" cy="12" r="2" fill="currentColor" />
+			</svg>
 		</button>
 		<div id="game-menu-dropdown" class="dropup-content" v-show="expanded === true">
 			<ul class="dropup-list">
@@ -19,13 +23,9 @@
 	</div>
 </template>
 <script>
-import Store from './state';
-import { MoreVerticalIcon } from 'vue-feather-icons';
+import Store from './state.js';
 export default {
 	name: 'GameMenu',
-	components: {
-		MoreVerticalIcon,
-	},
 	props: {
 		items: Array,
 		/* item in items: {
@@ -72,7 +72,7 @@ export default {
 	mounted() {
 		document.addEventListener('pointerdown', this.senseClickOutside);
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		document.removeEventListener('pointerdown', this.senseClickOutside);
 	},
 };

@@ -16,10 +16,10 @@
 </template>
 
 <script>
-import Store from './state';
-import VIEW from './view';
-import DialogComponent from './dialog';
-import PlayerStatusesList from './player-statuses-list';
+import Store from './state.js';
+import VIEW from './view.js';
+import DialogComponent from './dialog.vue';
+import PlayerStatusesList from './player-statuses-list.vue';
 export default {
 	name: 'RoomInfo',
 	components: {

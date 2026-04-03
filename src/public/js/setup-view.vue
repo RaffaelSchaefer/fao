@@ -182,9 +182,9 @@
 </template>
 
 <script>
-import Store from './state';
-import VIEW from './view';
-import Confirmation from './confirmation';
+import Store from './state.js';
+import VIEW from './view.js';
+import Confirmation from './confirmation.vue';
 export default {
 	name: 'SetupView',
 	components: {

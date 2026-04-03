@@ -9,7 +9,7 @@ const HEX = {
 	PURPLE: '#9900ee',
 	PINK: '#ee77ff',
 	BROWN: '#a56729',
-};
+} as const;
 
 const ORDER = [
 	'RED',
@@ -22,6 +22,6 @@ const ORDER = [
 	'PINK',
 	'MAGENTA',
 	'BROWN',
-];
+] as const;
 
 export { HEX, ORDER };

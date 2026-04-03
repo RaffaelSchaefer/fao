@@ -131,20 +131,20 @@
 </template>
 
 <script>
-import Store from './state';
-import VIEW from './view';
-import Layer from './layer';
-import RelativePoint from '../../common/relative-point';
-import GAME_PHASE from '../../common/game-phase';
-import CONNECTION_STATE from './connection-state';
-import ConnectionOverlay from './connection-overlay';
-import GameMenu from './game-menu';
-import RoomInfo from './room-info';
-import Confirmation from './confirmation';
-import VoteDialog from './vote-dialog';
-import RoundResultDialog from './round-result-dialog';
-import drawingPad from './drawing-pad';
-import PlayerStatusesList from './player-statuses-list';
+import Store from './state.js';
+import VIEW from './view.js';
+import Layer from './layer.js';
+import RelativePoint from '../../common/relative-point.js';
+import GAME_PHASE from '../../common/game-phase.js';
+import CONNECTION_STATE from './connection-state.js';
+import ConnectionOverlay from './connection-overlay.vue';
+import GameMenu from './game-menu.vue';
+import RoomInfo from './room-info.vue';
+import Confirmation from './confirmation.vue';
+import VoteDialog from './vote-dialog.vue';
+import RoundResultDialog from './round-result-dialog.vue';
+import drawingPad from './drawing-pad.js';
+import PlayerStatusesList from './player-statuses-list.vue';
 
 const CanvasState = {
 	EMPTY: 'EMPTY',
@@ -505,7 +505,7 @@ export default {
 		this.menuItems = this.generateMenuOptions();
 		window.addEventListener('resize', this.onWindowResize);
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		window.removeEventListener('resize', this.onWindowResize);
 	},
 };

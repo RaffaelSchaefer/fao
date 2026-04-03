@@ -10,9 +10,9 @@
 </template>
 
 <script>
-import Store from './state';
-import VIEW from './view';
-import DialogComponent from './dialog';
+import Store from './state.js';
+import VIEW from './view.js';
+import DialogComponent from './dialog.vue';
 export default {
 	name: 'Confirmation',
 	components: {

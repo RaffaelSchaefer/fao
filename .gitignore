@@ -8,3 +8,6 @@ package-lock.json
 *.min.*
 dist/
 .gstack/
+.agents/
+.claude/
+test-results/

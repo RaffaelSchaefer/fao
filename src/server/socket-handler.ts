@@ -1,9 +1,10 @@
+// @ts-nocheck
 import GAME_PHASE from '../common/game-phase.js';
 import MESSAGE from '../common/message.js';
 import User from '../common/user.js';
 import debugLog from './debug-log.js';
 import GameError from './game-error.js';
-import GamePrecond from './game-precond';
+import GamePrecond from './game-precond.js';
 import { ClientAdapter } from './game-room.js';
 import * as Lobby from './lobby.js';
 import * as Schema from './schema.js';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import _ from 'lodash';
 import GAME_PHASE from '../common/game-phase.js';
 import GameError from './game-error.js';

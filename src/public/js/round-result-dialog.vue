@@ -124,7 +124,7 @@ export default {
 			this.revealComplete = true;
 		}, maxDelay * 1000);
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		clearTimeout(this._revealTimer);
 	},
 };

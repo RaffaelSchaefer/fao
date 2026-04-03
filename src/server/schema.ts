@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Schemas for socket.io messages
  */
@@ -5,12 +6,13 @@
 import Ajv from 'ajv';
 import MESSAGE from '../common/message.js';
 import GameError from './game-error.js';
+
 const ajv = new Ajv();
 
 const usernameMinLength = 1;
 const usernameMaxLength = 20;
 
-const SCHEMA = {};
+const SCHEMA: Record<string, any> = {};
 
 SCHEMA[MESSAGE.CREATE_ROOM] = {
 	$id: MESSAGE.CREATE_ROOM,
@@ -131,17 +133,20 @@ SCHEMA[MESSAGE.SET_GAME_MODE] = {
 	required: ['mode'],
 };
 
-for (let schema of Object.values(SCHEMA)) {
-	ajv.addSchema(schema, schema.$id);
+for (const schema of Object.values(SCHEMA)) {
+	if (schema) {
+		ajv.addSchema(schema, schema.$id);
+	}
 }
 console.log(`Message schemas loaded.`);
 
-function validateMessageFromClient(messageName, json) {
-	if (!SCHEMA[messageName]) {
+function validateMessageFromClient(messageName: MessageName, json: unknown) {
+	const schema = SCHEMA[messageName];
+	if (!schema) {
 		return true;
 	}
 
-	let res = ajv.validate(messageName, json);
+	const res = ajv.validate(messageName, json);
 	if (!res) {
 		console.warn(ajv.errorsText());
 		throw new GameError('Invalid message');

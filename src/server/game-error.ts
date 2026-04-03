@@ -1,4 +1,4 @@
-import debugLog from './debug-log';
+import debugLog from './debug-log.js';
 
 /**
  * Error object for user and game state validation
@@ -7,7 +7,11 @@ import debugLog from './debug-log';
  */
 
 class GameError {
-	constructor(message, clientMessage, debugOnly = false) {
+	name: string;
+	message: string;
+	clientMessage: string;
+
+	constructor(message: string, clientMessage?: string, debugOnly = false) {
 		this.name = GameError.name;
 		this.message = message;
 		this.clientMessage = clientMessage || message;
@@ -27,4 +31,5 @@ class GameError {
 		return this.message;
 	}
 }
+
 export default GameError;

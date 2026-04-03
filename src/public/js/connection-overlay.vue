@@ -5,8 +5,8 @@
 </template>
 
 <script>
-import Store from './state';
-import CONNECTION_STATE from './connection-state';
+import Store from './state.js';
+import CONNECTION_STATE from './connection-state.js';
 
 export default {
 	name: `ConnectionOverlay`,

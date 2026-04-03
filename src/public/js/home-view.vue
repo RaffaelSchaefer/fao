@@ -32,7 +32,7 @@
 	</div>
 </template>
 <script>
-import HomeMenu from './home-menu';
+import HomeMenu from './home-menu.vue';
 export default {
 	name: 'HomeView',
 	components: {

@@ -15,6 +15,8 @@ const MESSAGE = {
 	TOGGLE_CUSTOM_TOPICS: 'TOGGLE_CUSTOM_TOPICS',
 	SET_GAME_MODE: 'SET_GAME_MODE',
 	TURN_TIMER_UPDATE: 'TURN_TIMER_UPDATE',
-};
+} as const;
+
+export type MessageName = (typeof MESSAGE)[keyof typeof MESSAGE];
 
 export default MESSAGE;

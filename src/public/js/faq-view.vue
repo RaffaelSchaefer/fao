@@ -68,8 +68,8 @@
 </template>
 
 <script>
-import Store from './state';
-import VIEW from './view';
+import Store from './state.js';
+import VIEW from './view.js';
 export default {
 	name: 'RulesView',
 	methods: {
