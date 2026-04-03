@@ -4,6 +4,11 @@
 **Test Method:** Static analysis + existing test suite + headless browser screenshots
 **Agent Coverage:** Server logic, client Vue components, game flow/WebSocket, npm dependencies
 
+> Historical note: this report predates the Vue 3 + TypeScript + Vite+ migration.
+> The old webpack/Vue 2/Babel-era findings below are preserved for context, but the
+> current codebase has since been rebuilt and now passes `npm run check`,
+> `npm run build`, and `npm test`.
+
 ---
 
 ## Executive Summary
@@ -459,13 +464,13 @@ Test Suite
 
 ## Build / Infrastructure Issues
 
-### B1. Webpack 4 is End-of-Life
+### B1. Legacy Build Stack Has Been Replaced
 
-Webpack 4 reached EOL. The build output shows numerous deprecation warnings from the legacy JS API for Sass. Migration to webpack 5 is recommended.
+The repo has already moved off the old webpack/Babel stack. The remaining build warnings come from Sass `@import` deprecations in the stylesheet layer, not from webpack.
 
-### B2. Babel 7 is Configured but No Modern Transpilation Targets
+### B2. Server Compilation Is Now TypeScript-Based
 
-The Babel config may be using default targets. Should ensure consistent transpilation for the server code.
+The server build path now runs through `tsc` and NodeNext modules. Keep server/runtime changes aligned with `tsconfig.server.json` and the Vite+ client config.
 
 ### B3. No Dockerfile
 

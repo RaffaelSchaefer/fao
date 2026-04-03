@@ -78,6 +78,65 @@ describe('socket contract', () => {
 		expect(returned.err).toBeUndefined();
 		expect(returned.roomState.phase).toBe(GAME_PHASE.SETUP);
 	});
+
+	it('broadcasts updated room state after each submitted stroke', async () => {
+		const created = await once(sock1, MESSAGE.CREATE_ROOM, {
+			username: 'alice',
+		});
+		const roomCode = created.roomState.roomCode;
+
+		await once(sock2, MESSAGE.JOIN_ROOM, {
+			username: 'bob',
+			roomCode,
+		});
+
+		const [started1, started2] = await Promise.all([
+			waitForEvent(sock1, MESSAGE.START_GAME),
+			waitForEvent(sock2, MESSAGE.START_GAME),
+			emitAndWaitForAck(sock1, MESSAGE.START_GAME, {}),
+		]);
+
+		const activeSock = started1.roomState.whoseTurn === 'alice' ? sock1 : sock2;
+
+		const [nextTurn1, nextTurn2] = await Promise.all([
+			waitForEvent(sock1, MESSAGE.NEW_TURN),
+			waitForEvent(sock2, MESSAGE.NEW_TURN),
+			emitAndWaitForAck(activeSock, MESSAGE.SUBMIT_STROKE, {
+				points: [
+					{ x: 0, y: 0 },
+					{ x: 10, y: 10 },
+				],
+			}),
+		]);
+
+		expect(nextTurn1.roomState.strokes).toHaveLength(1);
+		expect(nextTurn2.roomState.strokes).toHaveLength(1);
+		expect(nextTurn1.roomState.turn).toBe(nextTurn2.roomState.turn);
+		expect(nextTurn1.roomState.phase).toBe(GAME_PHASE.PLAY);
+		expect(nextTurn2.roomState.phase).toBe(GAME_PHASE.PLAY);
+	});
+
+	it('broadcasts the vote-phase transition after the final stroke', async () => {
+		let currentState = await startTwoPlayerGame(sock1, sock2);
+
+		for (let strokeIndex = 0; strokeIndex < 4; strokeIndex++) {
+			const activeSock = currentState.roomState.whoseTurn === 'alice' ? sock1 : sock2;
+			const [nextTurn1] = await Promise.all([
+				waitForEvent(sock1, MESSAGE.NEW_TURN),
+				waitForEvent(sock2, MESSAGE.NEW_TURN),
+				emitAndWaitForAck(activeSock, MESSAGE.SUBMIT_STROKE, {
+					points: [
+						{ x: strokeIndex, y: strokeIndex },
+						{ x: strokeIndex + 10, y: strokeIndex + 10 },
+					],
+				}),
+			]);
+			currentState = nextTurn1;
+		}
+
+		expect(currentState.roomState.phase).toBe(GAME_PHASE.VOTE);
+		expect(currentState.roomState.strokes).toHaveLength(4);
+	});
 });
 
 function waitForConnect(sock: ReturnType<typeof io>) {
@@ -96,4 +155,43 @@ function once(sock: ReturnType<typeof io>, eventName: string, payload = {}) {
 		sock.once(eventName, (data: any) => resolve(data));
 		sock.emit(eventName, payload);
 	});
+}
+
+function waitForEvent(sock: ReturnType<typeof io>, eventName: string) {
+	return new Promise<any>((resolve, reject) => {
+		const timeout = setTimeout(() => {
+			reject(new Error(`Timed out waiting for ${eventName}`));
+		}, 2000);
+
+		sock.once(eventName, (data: any) => {
+			clearTimeout(timeout);
+			resolve(data);
+		});
+	});
+}
+
+function emitAndWaitForAck(sock: ReturnType<typeof io>, eventName: string, payload = {}) {
+	return new Promise<void>((resolve) => {
+		sock.emit(eventName, payload);
+		resolve();
+	});
+}
+
+async function startTwoPlayerGame(sock1: ReturnType<typeof io>, sock2: ReturnType<typeof io>) {
+	const created = await once(sock1, MESSAGE.CREATE_ROOM, {
+		username: 'alice',
+	});
+
+	await once(sock2, MESSAGE.JOIN_ROOM, {
+		username: 'bob',
+		roomCode: created.roomState.roomCode,
+	});
+
+	const [started1] = await Promise.all([
+		waitForEvent(sock1, MESSAGE.START_GAME),
+		waitForEvent(sock2, MESSAGE.START_GAME),
+		emitAndWaitForAck(sock1, MESSAGE.START_GAME, {}),
+	]);
+
+	return started1;
 }

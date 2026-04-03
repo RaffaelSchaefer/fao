@@ -130,13 +130,14 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
 import Store from './state.js';
 import VIEW from './view.js';
 import Layer from './layer.js';
 import RelativePoint from '../../common/relative-point.js';
 import GAME_PHASE from '../../common/game-phase.js';
-import CONNECTION_STATE from './connection-state.js';
+import CONNECTION_STATE, { type ConnectionState } from './connection-state.js';
 import ConnectionOverlay from './connection-overlay.vue';
 import GameMenu from './game-menu.vue';
 import RoomInfo from './room-info.vue';
@@ -145,6 +146,7 @@ import VoteDialog from './vote-dialog.vue';
 import RoundResultDialog from './round-result-dialog.vue';
 import drawingPad from './drawing-pad.js';
 import PlayerStatusesList from './player-statuses-list.vue';
+import type { ClientGameState } from './client-game.js';
 
 const CanvasState = {
 	EMPTY: 'EMPTY',
@@ -161,25 +163,44 @@ const Dialogs = {
 	ROUND_RESULT: 'ROUND_RESULT',
 };
 
-const strokeTracker = {
+type CanvasStateName = (typeof CanvasState)[keyof typeof CanvasState];
+type DialogName = (typeof Dialogs)[keyof typeof Dialogs];
+
+type MenuItem = {
+	text: string;
+	hr?: boolean;
+	action?: () => void;
+};
+
+interface StrokeTracker {
+	points: RelativePoint[];
+	maxCount: number;
+	strokeLength: number;
+	addPoint(point: RelativePoint): RelativePoint[];
+	lastPoint(): RelativePoint | undefined;
+	reset(): void;
+	validateStrokeDistance(): boolean;
+	hasPoints(): boolean;
+}
+
+const strokeTracker: StrokeTracker = {
 	points: [],
 	maxCount: 5000,
 	strokeLength: 0,
-	addPoint: function(p) {
+	addPoint(p: RelativePoint) {
 		if (this.points.length < this.maxCount) {
 			this.points.push(p);
 		}
 		return this.points;
 	},
-	lastPoint: function() {
-		let prevPt = this.points[this.points.length - 1];
-		return prevPt;
+	lastPoint() {
+		return this.points[this.points.length - 1];
 	},
-	reset: function() {
+	reset() {
 		this.points = [];
 		this.strokeLength = 0;
 	},
-	validateStrokeDistance: function() {
+	validateStrokeDistance() {
 		// TODO validate by relativeLength?
 		if (this.points.length < 2) {
 			return false;
@@ -188,10 +209,10 @@ const strokeTracker = {
 		const minLength = 0.02;
 		let dist = 0;
 		for (let i = 1; i < this.points.length; i++) {
-			let prevPt = this.points[i - 1];
-			let curPt = this.points[i];
-			let a = prevPt.x - curPt.x;
-			let b = prevPt.y - curPt.y;
+			const prevPt = this.points[i - 1];
+			const curPt = this.points[i];
+			const a = prevPt.x - curPt.x;
+			const b = prevPt.y - curPt.y;
 			dist += Math.sqrt(a * a + b * b);
 			// console.log(dist);
 			if (dist > minLength) {
@@ -200,14 +221,14 @@ const strokeTracker = {
 		}
 		return false;
 	},
-	hasPoints: function() {
+	hasPoints() {
 		return this.points.length > 0;
 	},
 };
 
 const SIDE_PLAYER_STATUSES_LIST_MIN_WIDTH = 120;
 
-export default {
+export default defineComponent({
 	name: 'GameView',
 	components: {
 		ConnectionOverlay,
@@ -220,11 +241,11 @@ export default {
 	},
 	props: {
 		gameConnection: {
-			type: String,
+			type: String as PropType<ConnectionState>,
 			required: true,
 		},
 		gameState: {
-			type: Object,
+			type: Object as PropType<ClientGameState>,
 			required: true,
 		},
 		sfxDisabled: {
@@ -234,73 +255,68 @@ export default {
 	},
 	data() {
 		return {
-			canvasState: CanvasState.SPECTATE,
+			canvasState: CanvasState.SPECTATE as CanvasStateName,
 			stroke: strokeTracker,
 			drawingPad: drawingPad,
 			promptVisible: true,
-			menuItems: [],
+			menuItems: [] as MenuItem[],
 			playerStatusesListMaxWidth: 0,
-			currentDialog: undefined,
+			currentDialog: undefined as DialogName | undefined,
 		};
 	},
 	computed: {
-		username() {
+		username(): string {
 			return Store.state.username;
 		},
-		promptText() {
-			if (!this.gameState) return '';
+		promptText(): string {
 			return `${this.gameState.hint}: ${this.gameState.keyword}`;
 		},
-		whoseTurnText() {
-			if (!this.gameState) return '';
+		whoseTurnText(): string {
 			if (this.gameState.phase === GAME_PHASE.VOTE) return 'Time to vote!';
 			return `${this.gameState.whoseTurn}'s turn`;
 		},
-		isTimedMode() {
-			return this.gameState && this.gameState.gameMode === 'timed';
+		isTimedMode(): boolean {
+			return this.gameState.gameMode === 'timed';
 		},
-		timerBarStyle() {
-			if (!this.gameState) return {};
+		timerBarStyle(): Record<string, string> {
 			const pct = (this.gameState.turnTimeRemaining / 15) * 100;
 			return { width: `${pct}%` };
 		},
-		timerBarClass() {
-			const remaining = this.gameState ? this.gameState.turnTimeRemaining : 15;
+		timerBarClass(): string {
+			const remaining = this.gameState.turnTimeRemaining;
 			if (remaining <= 3) return 'timer-urgent';
 			if (remaining <= 6) return 'timer-warning';
 			return '';
 		},
-		userColor() {
-			if (!this.gameState) return 'var(--grey6)';
+		userColor(): string {
 			return this.gameState.getUserColor(this.gameState.whoseTurn);
 		},
-		isRoundOver() {
-			if (!this.gameState) return false;
+		isRoundOver(): boolean {
 			return this.gameState.phase === GAME_PHASE.VOTE;
 		},
-		isVotingPhase() {
-			return this.gameState && this.gameState.phase === GAME_PHASE.VOTE;
+		isVotingPhase(): boolean {
+			return this.gameState.phase === GAME_PHASE.VOTE;
 		},
-		isMyTurn() {
+		isMyTurn(): boolean {
 			return Store.myTurn();
 		},
-		actionsEnabled() {
+		actionsEnabled(): boolean {
 			return (
 				this.canvasState === 'PREVIEW' && this.gameConnection === CONNECTION_STATE.CONNECT
 			);
 		},
-		roundAndTurn() {
+		roundAndTurn(): string {
 			return this.gameState.round + '-' + this.gameState.turn;
 		},
 	},
 	watch: {
-		roundAndTurn() {
+		roundAndTurn(): void {
 			this.reset();
 		},
-		['gameState.round']() {
+		'gameState.round'(): void {
 			this.promptVisible = true;
 		},
-		['gameState.phase'](newPhase) {
+		'gameState.phase'(newPhase: ClientGameState['phase']): void {
 			this.menuItems = this.generateMenuOptions();
 			if (newPhase === GAME_PHASE.VOTE) {
 				// Auto-show vote dialog when voting starts
@@ -313,22 +329,22 @@ export default {
 				}
 			}
 		},
-		['gameState.lastRoundResult'](newResult) {
+		'gameState.lastRoundResult'(newResult: ClientGameState['lastRoundResult']): void {
 			if (newResult) {
 				// Show round result dialog immediately
 				this.hideDialogs();
 				this.showDialog(Dialogs.ROUND_RESULT);
 			}
 		},
-		['sfxDisabled']() {
+		sfxDisabled(): void {
 			this.menuItems = this.generateMenuOptions();
 		},
-		promptVisible() {
+		promptVisible(): void {
 			this.menuItems = this.generateMenuOptions();
 		},
 	},
 	methods: {
-		reset() {
+		reset(): void {
 			if (this.gameState.turn === 1) {
 				drawingPad.clearLayer(Layer.BOTTOM);
 			}
@@ -350,12 +366,12 @@ export default {
 				this.canvasState = CanvasState.SPECTATE;
 			}
 		},
-		undo() {
+		undo(): void {
 			this.stroke.reset();
 			drawingPad.clearLayer(Layer.TOP);
 			this.canvasState = CanvasState.EMPTY;
 		},
-		submit() {
+		submit(): void {
 			if (Store.myTurn() && this.stroke.hasPoints()) {
 				Store.submitStroke(this.stroke.points);
 
@@ -363,35 +379,34 @@ export default {
 				this.canvasState = CanvasState.SPECTATE;
 			}
 		},
-		nextRound() {
+		nextRound(): void {
 			Store.submitNextRound();
 			this.hideDialogs(); // for skip dialog
 		},
-		pdown(e) {
+		pdown(e: PointerEvent): void {
 			if (this.canvasState === CanvasState.EMPTY && Store.myTurn()) {
 				this.canvasState = CanvasState.PAINT;
-				let newPt = drawingPad.getRelativePointFromPointerEvent(e);
+				const newPt = drawingPad.getRelativePointFromPointerEvent(e);
 				strokeTracker.addPoint(newPt);
 			}
 		},
-		pmove(e) {
+		pmove(e: PointerEvent): void {
 			if (this.canvasState === CanvasState.PAINT && Store.myTurn()) {
-				let div = document.getElementById('new-paint');
-				let lastPt = strokeTracker.lastPoint();
-				let newPt = drawingPad.getRelativePointFromPointerEvent(e);
-				if (!lastPt.matches(newPt)) {
+				const lastPt = strokeTracker.lastPoint();
+				const newPt = drawingPad.getRelativePointFromPointerEvent(e);
+				if (!lastPt || !lastPt.matches(newPt)) {
 					strokeTracker.addPoint(newPt);
 					drawingPad.drawStroke(Layer.TOP, strokeTracker.points, 'black');
 				}
 			}
 		},
-		endStroke(e) {
+		endStroke(e: PointerEvent): void {
 			if (this.canvasState === CanvasState.PAINT && Store.myTurn()) {
 				if (strokeTracker.validateStrokeDistance()) {
 					this.canvasState = CanvasState.PREVIEW;
-					let lastPt = strokeTracker.lastPoint();
-					let newPt = drawingPad.getRelativePointFromPointerEvent(e);
-					if (!lastPt.matches(newPt)) {
+					const lastPt = strokeTracker.lastPoint();
+					const newPt = drawingPad.getRelativePointFromPointerEvent(e);
+					if (!lastPt || !lastPt.matches(newPt)) {
 						strokeTracker.addPoint(newPt);
 						drawingPad.drawStroke(Layer.TOP, strokeTracker.points, 'black');
 					}
@@ -402,11 +417,11 @@ export default {
 				}
 			}
 		},
-		onWindowResize() {
+		onWindowResize(): void {
 			this.resizeDrawingPad();
 			this.resizePlayerStatusesList();
 		},
-		resizeDrawingPad() {
+		resizeDrawingPad(): void {
 			drawingPad.adjustSize();
 			drawingPad.clearLayer(Layer.TOP);
 			drawingPad.drawStroke(Layer.TOP, strokeTracker.points, 'black');
@@ -419,7 +434,7 @@ export default {
 				);
 			}
 		},
-		resizePlayerStatusesList() {
+		resizePlayerStatusesList(): void {
 			const availableWidth = window.innerWidth / 2 - drawingPad.canvasWidth / 2;
 			if (availableWidth >= SIDE_PLAYER_STATUSES_LIST_MIN_WIDTH) {
 				this.playerStatusesListMaxWidth = Math.floor(availableWidth);
@@ -427,34 +442,34 @@ export default {
 				this.playerStatusesListMaxWidth = 0;
 			}
 		},
-		togglePrompt() {
+		togglePrompt(): void {
 			this.promptVisible = !this.promptVisible;
 		},
-		toggleSfx() {
+		toggleSfx(): void {
 			Store.toggleSfx();
 		},
-		showDialog(name) {
+		showDialog(name: DialogName): void {
 			this.currentDialog = name;
 		},
-		hideDialogs() {
+		hideDialogs(): void {
 			this.currentDialog = undefined;
 		},
-		setup() {
+		setup(): void {
 			Store.submitReturnToSetup();
 			this.hideDialogs();
 		},
-		submitVote(targetName) {
+		submitVote(targetName: string): void {
 			Store.submitVote(targetName);
 			// Close vote dialog after submitting — state update will refresh votes
 			this.hideDialogs();
 			// Show a temporary "waiting" overlay
 			this.showDialog(Dialogs.VOTE);
 		},
-		rules() {
+		rules(): void {
 			Store.setView(VIEW.RULES);
 		},
-		generateMenuOptions() {
-			const nextRoundOption =
+		generateMenuOptions(): MenuItem[] {
+			const nextRoundOption: MenuItem =
 				this.gameState.phase === GAME_PHASE.VOTE
 					? {
 							text: 'New round',
@@ -464,7 +479,7 @@ export default {
 							text: 'Skip this round',
 							action: () => {
 								this.showDialog(Dialogs.SKIP_ROUND);
-							},
+								},
 					  };
 			return [
 				{
@@ -496,7 +511,7 @@ export default {
 		},
 	},
 	mounted() {
-		this.$nextTick(function() {
+		this.$nextTick(() => {
 			drawingPad.init();
 			drawingPad.adjustSize();
 			this.resizePlayerStatusesList();
@@ -508,7 +523,7 @@ export default {
 	beforeUnmount() {
 		window.removeEventListener('resize', this.onWindowResize);
 	},
-};
+});
 </script>
 
 <style scoped>

@@ -15,12 +15,19 @@
 	</dialog-component>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
 import Store from './state.js';
 import VIEW from './view.js';
 import DialogComponent from './dialog.vue';
 import PlayerStatusesList from './player-statuses-list.vue';
-export default {
+
+type PlayerInfo = {
+	name: string;
+	connected?: boolean;
+};
+
+export default defineComponent({
 	name: 'RoomInfo',
 	components: {
 		DialogComponent,
@@ -28,19 +35,20 @@ export default {
 	},
 	props: {
 		roomCode: {
-			type: String,
+			type: String as PropType<string | undefined>,
 		},
 		users: {
-			type: Array,
+			type: Array as PropType<PlayerInfo[]>,
+			required: true,
 		},
 	},
 	methods: {
-		color(user) {
-			return Store.state.gameState.getUserColor(user.name);
+		color(user: PlayerInfo): string {
+			return Store.state.gameState!.getUserColor(user.name);
 		},
-		connectionStatusString(user) {
+		connectionStatusString(user: PlayerInfo): string {
 			return user.connected ? '' : 'Disconnected';
 		},
 	},
-};
+});
 </script>

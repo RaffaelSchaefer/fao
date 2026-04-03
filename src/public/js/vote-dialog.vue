@@ -64,41 +64,47 @@
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
+
+type VoteUser = {
+	name: string;
+};
+
+export default defineComponent({
 	name: 'VoteDialog',
 	props: {
-		users: { type: Array, required: true },
+		users: { type: Array as PropType<VoteUser[]>, required: true },
 		myName: { type: String, required: true },
 	},
 	data() {
 		return {
-			myVote: null,
+			myVote: null as string | null,
 			submitted: false,
 		};
 	},
 	computed: {
-		hasVoted() {
+		hasVoted(): boolean {
 			return this.submitted;
 		},
-		otherUsers() {
+		otherUsers(): VoteUser[] {
 			return this.users.filter((u) => u.name !== this.myName);
 		},
 	},
 	watch: {
-		users() {
+		users(): void {
 			this.myVote = null;
 			this.submitted = false;
 		},
 	},
 	methods: {
-		resetAndClose() {
+		resetAndClose(): void {
 			this.myVote = null;
 			this.submitted = false;
 			this.$emit('close');
 		},
 	},
-};
+});
 </script>
 
 <style scoped>

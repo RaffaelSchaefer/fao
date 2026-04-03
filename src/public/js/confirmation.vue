@@ -9,11 +9,11 @@
 	</dialog-component>
 </template>
 
-<script>
-import Store from './state.js';
-import VIEW from './view.js';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import DialogComponent from './dialog.vue';
-export default {
+
+export default defineComponent({
 	name: 'Confirmation',
 	components: {
 		DialogComponent,
@@ -28,5 +28,5 @@ export default {
 			default: 'Confirm',
 		},
 	},
-};
+});
 </script>

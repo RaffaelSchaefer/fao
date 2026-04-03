@@ -15,6 +15,7 @@ type StoreWarning = 'createWarning' | 'joinWarning';
 
 interface StoreState {
 	username: string;
+	roomCode: string;
 	sfxDisabled: boolean;
 	view: ViewName;
 	previousView: ViewName;
@@ -50,6 +51,7 @@ interface StoreShape {
 
 const state = reactive<StoreState>({
 	username: localStorage.username || '',
+	roomCode: '',
 	sfxDisabled: localStorage.sfxDisabled === 'true',
 	view: VIEW.HOME,
 	previousView: VIEW.HOME,

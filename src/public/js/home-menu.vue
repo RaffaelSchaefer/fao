@@ -113,11 +113,12 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import Store from './state.js';
 import VIEW from './view.js';
 
-export default {
+export default defineComponent({
 	name: 'home-menu',
 	components: {},
 	data() {
@@ -127,28 +128,28 @@ export default {
 		};
 	},
 	methods: {
-		setTab(value) {
+		setTab(value: 'main' | 'create' | 'join'): void {
 			this.tab = value;
 		},
-		gotoRules() {
+		gotoRules(): void {
 			Store.setView(VIEW.RULES);
 		},
-		gotoFaq() {
+		gotoFaq(): void {
 			Store.setView(VIEW.FAQ);
 		},
-		createGame() {
+		createGame(): void {
 			Store.submitCreateGame(Store.state.username);
 		},
-		joinGame() {
+		joinGame(): void {
 			Store.submitJoinGame(Store.state.roomCode, Store.state.username);
 		},
 	},
 	watch: {
-		'store.username'(val) {
+		'store.username'(val: string): void {
 			Store.setUsername(val ? val.trim() : val);
 		},
 	},
-};
+});
 </script>
 
 <style scoped>

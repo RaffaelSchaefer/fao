@@ -41,15 +41,17 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import Store from './state.js';
 import VIEW from './view.js';
-export default {
+
+export default defineComponent({
 	name: 'RulesView',
 	methods: {
-		back() {
+		back(): void {
 			Store.setView(Store.state.previousView);
 		},
 	},
-};
+});
 </script>

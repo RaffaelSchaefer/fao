@@ -4,29 +4,29 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
 import Store from './state.js';
 import CONNECTION_STATE from './connection-state.js';
 
-export default {
+export default defineComponent({
 	name: `ConnectionOverlay`,
-	components: {},
 	props: {
 		gameConnection: {
-			type: String,
+			type: String as PropType<string>,
 			required: true,
 		},
 	},
 	computed: {
-		connected() {
+		connected(): boolean {
 			return this.gameConnection === CONNECTION_STATE.CONNECT;
 		},
-		message() {
-			if(Store.state.joinWarning) {
+		message(): string {
+			if (Store.state.joinWarning) {
 				return 'Reconnection failure: ' + Store.state.joinWarning;
 			}
 			return 'Reconnecting...';
-		}
+		},
 	},
-};
+});
 </script>

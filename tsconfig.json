@@ -12,7 +12,6 @@
 		},
 		"types": ["vite/client", "node"],
 		"noEmit": true,
-		"allowJs": true,
 		"checkJs": false,
 		"isolatedModules": true,
 		"esModuleInterop": true,
@@ -21,8 +20,8 @@
 	"include": [
 		"src/main.ts",
 		"src/env.d.ts",
-		"src/common/**/*.{ts,js}",
-		"src/public/**/*.{ts,js}",
+		"src/common/**/*.ts",
+		"src/public/**/*.ts",
 		"src/**/*.vue",
 		"vite.config.ts",
 		"playwright.config.ts",

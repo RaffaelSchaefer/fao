@@ -70,25 +70,43 @@
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
+
+type RoundResult = {
+	round: number;
+	fakerName?: string;
+	fakerCaught: boolean;
+	pointsAwarded?: Record<string, number>;
+};
+
+type ResultUser = {
+	name: string;
+};
+
+export default defineComponent({
 	name: 'RoundResultDialog',
 	props: {
-		roundResult: { type: Object, default: null },
-		users: { type: Array, required: true },
-		scores: { type: Object, default: () => ({}) },
+		roundResult: { type: Object as PropType<RoundResult | null>, default: null },
+		users: { type: Array as PropType<ResultUser[]>, required: true },
+		scores: { type: Object as PropType<Record<string, number>>, default: () => ({}) },
 	},
 	data() {
 		return {
 			revealComplete: false,
+			revealTimer: 0,
 		};
 	},
 	computed: {
-		sortedScores() {
-			let entries = this.users.map((u) => ({
+		sortedScores(): Array<{ name: string; points: number; total: number; rank: number }> {
+			const entries = this.users.map((u) => ({
 				name: u.name,
-				points: this.roundResult && this.roundResult.pointsAwarded ? (this.roundResult.pointsAwarded[u.name] || 0) : 0,
+				points:
+					this.roundResult && this.roundResult.pointsAwarded
+						? this.roundResult.pointsAwarded[u.name] || 0
+						: 0,
 				total: this.scores[u.name] || 0,
+				rank: 0,
 			}));
 			entries.sort((a, b) => b.total - a.total);
 			entries.forEach((e, i) => {
@@ -102,17 +120,27 @@ export default {
 		},
 	},
 	methods: {
-		skipReveal() {
+		skipReveal(): void {
 			this.revealComplete = true;
 		},
-		getUserColor(name) {
+		getUserColor(name: string): string {
 			const COLORS = [
-				'#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-				'#1abc9c', '#e67e22', '#e91e63', '#00bcd4', '#8bc34a',
+				'#e74c3c',
+				'#3498db',
+				'#2ecc71',
+				'#f39c12',
+				'#9b59b6',
+				'#1abc9c',
+				'#e67e22',
+				'#e91e63',
+				'#00bcd4',
+				'#8bc34a',
 			];
 			// Consistent color assignment per player name across all rounds
 			let hash = 0;
-			for (let c of name) { hash = ((hash << 5) - hash) + c.charCodeAt(0); }
+			for (const c of name) {
+				hash = (hash << 5) - hash + c.charCodeAt(0);
+			}
 			return COLORS[Math.abs(hash) % COLORS.length] || 'var(--grey6)';
 		},
 	},
@@ -120,14 +148,14 @@ export default {
 		// Auto-mark reveal complete after all animations finish
 		const delays = [0, 0.4, 0.8, 1.1, 1.4, 1.7, ...this.users.map((_, i) => 1.7 + i * 0.15)];
 		const maxDelay = Math.max(...delays) + 0.4; // animation duration
-		this._revealTimer = setTimeout(() => {
+		this.revealTimer = window.setTimeout(() => {
 			this.revealComplete = true;
 		}, maxDelay * 1000);
 	},
 	beforeUnmount() {
-		clearTimeout(this._revealTimer);
+		clearTimeout(this.revealTimer);
 	},
-};
+});
 </script>
 
 <style scoped>

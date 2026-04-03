@@ -1,31 +1,51 @@
 # Fake Artist Online
 
-An online party game based on Oink Games' tabletop game, _A Fake Artist Goes to New York_. Draw with your phone or a mouse.
+An online party game based on Oink Games' tabletop game, _A Fake Artist Goes to New York_.
 
-Made with Vue, Express, and Socket.io.
+## Stack
 
-Play on Heroku: https://kc-fakeartistonline.herokuapp.com/
+- Vue 3 + TypeScript
+- Vite+
+- Express
+- Socket.IO 4
+- Vitest + Playwright
 
-## Develop
+## Development
 
-Watch-build public: `npm run watch-p`
+```bash
+npm install
+npm run dev
+```
 
-Build and run server: `npm run build-s && npm run start`
+## Common Commands
 
-## Contributing guidelines
+```bash
+npm run check      # Type-check client, shared code, and Vite config
+npm run build:server
+npm run build
+npm test
+npm run test:e2e
+npm run start
+```
 
-I'm not actively seeking contributors, but if you have a pull request I'm happy to take a look!
+## Project Layout
 
-Some guidelines:
+```text
+src/common/      Shared game models, enums, and helpers
+src/public/js/    Vue SFCs, client state, canvas helpers
+src/public/style/ Global styles
+src/public/static/ Static assets
+src/server/      Express + Socket.IO server and game logic
+test/e2e/        Browser coverage
+test/server/     Server contract tests
+```
 
--   I'm not seeking additional keyword prompts. There's already a lot!
--   UI should accomodate iPhone 5 screens (320x568).
--   FAO isn't ambitious. The old Crabhat Spyfall webapp's minimalism was a big inspiration for me.
--   As a loose rule of thumb, I'm hesitant to add to or enforce game rules. This keeps things minimalistic and accommodates for players with house rules.
+## Contributing Notes
 
-If you have questions, feel free to email me or create a feature request for discussion.
-
-I'm also totally cool with people hosting their own forks, as long as there's credit to the original repo.
+- Keep the UI mobile-friendly. Small screens should remain usable.
+- The game is intentionally minimal. Avoid adding unnecessary rules or complexity.
+- The app is in-memory only, with no database.
+- Realtime behavior should stay covered by server and browser tests.
 
 ## Support
 

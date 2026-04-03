@@ -181,24 +181,33 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
 import Store from './state.js';
 import VIEW from './view.js';
 import Confirmation from './confirmation.vue';
-export default {
+
+type SetupGameState = {
+	hostName: string | null;
+	customTopics?: Array<{ keyword: string; hint?: string }>;
+	useCustomTopicsOnly?: boolean;
+	gameMode?: 'classic' | 'timed';
+};
+
+export default defineComponent({
 	name: 'SetupView',
 	components: {
 		Confirmation,
 	},
 	props: {
 		roomCode: {
-			type: String,
+			type: String as PropType<string | undefined>,
 		},
 		usernames: {
-			type: Array,
+			type: Array as PropType<string[] | undefined>,
 		},
 		gameState: {
-			type: Object,
+			type: Object as PropType<Partial<SetupGameState>>,
 			default: () => ({}),
 		},
 	},
@@ -212,28 +221,28 @@ export default {
 		};
 	},
 	computed: {
-		isHost() {
+		isHost(): boolean {
 			return this.gameState.hostName === Store.state.username;
 		},
-		customTopics() {
+		customTopics(): Array<{ keyword: string; hint?: string }> {
 			return this.gameState.customTopics || [];
 		},
-		useCustomOnly() {
+		useCustomOnly(): boolean {
 			return this.gameState.useCustomTopicsOnly || false;
 		},
-		gameMode() {
+		gameMode(): 'classic' | 'timed' {
 			return this.gameState.gameMode || 'classic';
 		},
 	},
 	methods: {
-		start() {
+		start(): void {
 			Store.submitStartGame();
 		},
-		leave() {
+		leave(): void {
 			Store.setView(VIEW.HOME);
 			Store.submitLeaveGame();
 		},
-		addTopic() {
+		addTopic(): void {
 			const keyword = this.newKeyword.trim();
 			if (!keyword) return;
 			const hint = this.newHint.trim();
@@ -241,17 +250,20 @@ export default {
 			this.newKeyword = '';
 			this.newHint = '';
 		},
-		removeTopic(index) {
+		removeTopic(index: number): void {
 			Store.submitRemoveCustomTopic(index);
 		},
-		toggleCustomOnly(event) {
-			Store.submitToggleCustomOnly(event.target.checked);
+		toggleCustomOnly(event: Event): void {
+			const target = event.target as HTMLInputElement | null;
+			Store.submitToggleCustomOnly(Boolean(target?.checked));
 		},
-		onGameModeChange(event) {
-			Store.submitSetGameMode(event.target.value);
+		onGameModeChange(event: Event): void {
+			const target = event.target as HTMLInputElement | null;
+			if (!target) return;
+			Store.submitSetGameMode(target.value as 'classic' | 'timed');
 		},
 	},
-};
+});
 </script>
 
 <style scoped>

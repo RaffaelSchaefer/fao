@@ -26,8 +26,13 @@ async function startServer() {
 
 	console.log(`Prompts loaded. Counted ${prompts.length} prompts`);
 
-	httpServer.listen(port, function() {
-		console.log(`httpServer listening on port ${port}`);
+	await new Promise<void>((resolve, reject) => {
+		httpServer.once('error', reject);
+		httpServer.listen(port, function() {
+			httpServer.off('error', reject);
+			console.log(`httpServer listening on port ${port}`);
+			resolve();
+		});
 	});
 
 	return lobby;

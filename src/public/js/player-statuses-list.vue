@@ -24,22 +24,30 @@
 	</ul>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
 import Store from './state.js';
-export default {
+
+type PlayerStatus = {
+	name: string;
+	connected?: boolean;
+};
+
+export default defineComponent({
 	name: 'PlayerStatusesList',
 	props: {
 		users: {
-			type: Array,
+			type: Array as PropType<PlayerStatus[]>,
+			required: true,
 		},
 	},
 	methods: {
-		color(user) {
-			return Store.state.gameState.getUserColor(user.name);
+		color(user: PlayerStatus): string {
+			return Store.state.gameState!.getUserColor(user.name);
 		},
-		isMyTurn(user) {
+		isMyTurn(user: PlayerStatus): boolean {
 			return Store.state.gameState.whoseTurn === user.name;
 		},
 	},
-};
+});
 </script>

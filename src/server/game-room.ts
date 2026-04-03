@@ -154,6 +154,9 @@ class GameRoom {
 				this.turnTimeRemaining = 15;
 				this.startTimedTurn(io, callback);
 			}
+			if (callback) {
+				callback();
+			}
 			return this.turn;
 		}
 		return undefined;
@@ -161,10 +164,6 @@ class GameRoom {
 	turnTimerExpired(io, callback) {
 		console.log(`Rm${this.roomCode} Turn timer expired, turn ${this.turn}`);
 		this.nextTurn(io, callback);
-		if (this.phase === GAME_PHASE.PLAY) {
-			// Still in play, broadcast the turn change
-			if (callback) callback();
-		}
 	}
 	startTimedTurn(io, callback) {
 		this.stopTimedTurn();

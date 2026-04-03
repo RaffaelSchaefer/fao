@@ -31,14 +31,16 @@
 		</div>
 	</div>
 </template>
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import HomeMenu from './home-menu.vue';
-export default {
+
+export default defineComponent({
 	name: 'HomeView',
 	components: {
 		HomeMenu,
 	},
-};
+});
 </script>
 
 <style scoped>

@@ -13,14 +13,23 @@ body {
 	font-size: 16px;
 	font-weight: 600;
 	line-height: 1.4;
+	background-color: var(--grey0);
+	background-image:
+		radial-gradient(circle at 50% 30%, rgba(212, 255, 0, 0.04) 0%, transparent 65%),
+		radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+	background-size: 100% 100%, 28px 28px;
 
 	@media screen and (max-width: 480px) {
 		font-size: 14px;
 	}
 }
 
+#app {
+	min-height: 100%;
+}
+
 #wrapper {
-	height: 100%;
+	min-height: 100%;
 	position: relative;
 	background-color: var(--grey0);
 	// Subtle dot-grid atmosphere

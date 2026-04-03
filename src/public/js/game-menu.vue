@@ -22,12 +22,22 @@
 		</div>
 	</div>
 </template>
-<script>
-import Store from './state.js';
-export default {
+<script lang="ts">
+import { defineComponent, type PropType } from 'vue';
+
+type MenuItem = {
+	text: string;
+	hr?: boolean;
+	action?: () => void;
+};
+
+export default defineComponent({
 	name: 'GameMenu',
 	props: {
-		items: Array,
+		items: {
+			type: Array as PropType<MenuItem[]>,
+			required: true,
+		},
 		/* item in items: {
 			text: String. Text to display. Also the item key
 			hr: Boolean. If true, this item is just a <hr>
@@ -40,29 +50,30 @@ export default {
 		};
 	},
 	methods: {
-		toggle(event) {
+		toggle(_event: PointerEvent): void {
 			this.expanded = !this.expanded;
 		},
-		toggleHide() {
+		toggleHide(): void {
 			this.expanded = false;
 		},
-		doAction(item) {
+		doAction(item: MenuItem): void {
 			if (item.action) {
 				item.action();
 				this.toggleHide();
 			}
 		},
-		senseClickOutside(event) {
-			let clickedOutside;
+		senseClickOutside(event: PointerEvent): void {
+			const menu = document.getElementById('game-menu');
+			if (!menu) {
+				return;
+			}
+
+			let clickedOutside = false;
 			if (event.composedPath) {
-				clickedOutside =
-					event.composedPath().indexOf(document.getElementById('game-menu')) === -1;
+				clickedOutside = event.composedPath().indexOf(menu) === -1;
 			} else {
 				// Edge, IE
-				clickedOutside =
-					Array.from(
-						document.getElementById('game-menu').getElementsByTagName('*')
-					).indexOf(event.target) === -1;
+				clickedOutside = Array.from(menu.getElementsByTagName('*')).indexOf(event.target as Element) === -1;
 			}
 			if (clickedOutside) {
 				this.toggleHide();
@@ -75,5 +86,5 @@ export default {
 	beforeUnmount() {
 		document.removeEventListener('pointerdown', this.senseClickOutside);
 	},
-};
+});
 </script>

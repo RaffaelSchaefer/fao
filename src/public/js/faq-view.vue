@@ -67,15 +67,17 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import Store from './state.js';
 import VIEW from './view.js';
-export default {
-	name: 'RulesView',
+
+export default defineComponent({
+	name: 'FaqView',
 	methods: {
-		back() {
+		back(): void {
 			Store.setView(VIEW.HOME);
 		},
 	},
-};
+});
 </script>
