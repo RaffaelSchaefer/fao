@@ -42,7 +42,7 @@
 				@submit-vote="submitVote"
 			></vote-dialog>
 			<round-result-dialog
-				v-show="currentDialog === 'ROUND_RESULT'"
+				v-if="currentDialog === 'ROUND_RESULT'"
 				:round-result="gameState.lastRoundResult"
 				:users="gameState.users"
 				:scores="gameState.scores"
@@ -51,9 +51,22 @@
 				@to-setup="setup"
 			></round-result-dialog>
 			<div class="stripe">
-				<div id="game-info" class="stripe-content canvas-aligned">
-					<h1 class="prompt" v-show="promptVisible">{{ promptText }}</h1>
-					<h2 class="current-turn" :style="{ color: userColor }">{{ whoseTurnText }}</h2>
+				<div id="game-info" class="stripe-content canvas-aligned" :class="{ 'my-turn': isMyTurn }">
+					<div class="game-info-accent"></div>
+					<div class="game-info-body">
+						<h1 class="prompt" v-show="promptVisible">{{ promptText }}</h1>
+						<h2 class="current-turn" :style="{ color: userColor }">{{ whoseTurnText }}</h2>
+					</div>
+				</div>
+			</div>
+			<div class="stripe timer-stripe" v-if="isTimedMode && !isVotingPhase">
+				<div class="stripe-content canvas-aligned">
+					<div class="timer-display" :class="timerBarClass">
+						<span class="timer-digits" :key="gameState.turnTimeRemaining">{{ gameState.turnTimeRemaining }}</span>
+						<div class="timer-track">
+							<div class="timer-fill" :style="timerBarStyle" :class="timerBarClass"></div>
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="stripe flex-center">
@@ -77,7 +90,7 @@
 						<button
 							class="btn primary big"
 							@click="nextRound"
-							v-show="isRoundOver"
+							v-show="isRoundOver && currentDialog !== 'ROUND_RESULT'"
 							:disabled="!isRoundOver"
 						>
 							New Round
@@ -240,9 +253,22 @@ export default {
 		},
 		whoseTurnText() {
 			if (!this.gameState) return '';
-			return this.gameState.phase === GAME_PHASE.VOTE
-				? 'Time to vote!'
-				: `${this.gameState.whoseTurn}'s turn`;
+			if (this.gameState.phase === GAME_PHASE.VOTE) return 'Time to vote!';
+			return `${this.gameState.whoseTurn}'s turn`;
+		},
+		isTimedMode() {
+			return this.gameState && this.gameState.gameMode === 'timed';
+		},
+		timerBarStyle() {
+			if (!this.gameState) return {};
+			const pct = (this.gameState.turnTimeRemaining / 15) * 100;
+			return { width: `${pct}%` };
+		},
+		timerBarClass() {
+			const remaining = this.gameState ? this.gameState.turnTimeRemaining : 15;
+			if (remaining <= 3) return 'timer-urgent';
+			if (remaining <= 6) return 'timer-warning';
+			return '';
 		},
 		userColor() {
 			if (!this.gameState) return 'var(--grey6)';
@@ -254,6 +280,9 @@ export default {
 		},
 		isVotingPhase() {
 			return this.gameState && this.gameState.phase === GAME_PHASE.VOTE;
+		},
+		isMyTurn() {
+			return Store.myTurn();
 		},
 		actionsEnabled() {
 			return (
@@ -481,3 +510,120 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+/* ── Game info accent bar ── */
+#game-info {
+	display: flex;
+	align-items: stretch;
+}
+
+.game-info-accent {
+	width: 4px;
+	flex-shrink: 0;
+	background: var(--grey3);
+	margin-right: 10px;
+	transition: background 0.25s, box-shadow 0.25s;
+}
+
+#game-info.my-turn .game-info-accent {
+	background: var(--artist4);
+	box-shadow: 0 0 8px rgba(212, 255, 0, 0.5);
+}
+
+.game-info-body {
+	flex: 1;
+}
+
+/* ── Timer ── */
+.timer-stripe {
+	padding: 2px 8px 6px;
+}
+
+.timer-display {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 36px;
+}
+
+/* Countdown digit — keyed so Vue re-mounts it each tick, replaying the pop */
+.timer-digits {
+	font-family: var(--display-font);
+	font-size: 30px;
+	line-height: 1;
+	min-width: 28px;
+	text-align: right;
+	color: var(--artist4);
+	text-shadow:
+		0 0 8px rgba(212, 255, 0, 0.7),
+		0 0 20px rgba(212, 255, 0, 0.35);
+	transition: color 0.35s ease, text-shadow 0.35s ease;
+	animation: digit-pop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+	user-select: none;
+}
+
+.timer-display.timer-warning .timer-digits {
+	color: var(--gold4);
+	text-shadow:
+		0 0 8px rgba(255, 210, 0, 0.7),
+		0 0 20px rgba(255, 210, 0, 0.35);
+}
+
+.timer-display.timer-urgent .timer-digits {
+	color: #ff5555;
+	text-shadow:
+		0 0 8px rgba(255, 60, 60, 0.9),
+		0 0 20px rgba(255, 60, 60, 0.5);
+}
+
+/* Progress track */
+.timer-track {
+	flex: 1;
+	height: 8px;
+	background: var(--grey2);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.timer-fill {
+	height: 100%;
+	border-radius: 4px;
+	background: linear-gradient(90deg, var(--artist5) 0%, var(--artist4) 100%);
+	box-shadow:
+		0 0 6px rgba(212, 255, 0, 0.6),
+		0 0 14px rgba(212, 255, 0, 0.25);
+	transition: width 1s linear, background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.timer-fill.timer-warning {
+	background: linear-gradient(90deg, hsl(45, 100%, 42%) 0%, var(--gold4) 100%);
+	box-shadow:
+		0 0 6px rgba(255, 200, 0, 0.65),
+		0 0 14px rgba(255, 200, 0, 0.25);
+}
+
+.timer-fill.timer-urgent {
+	background: linear-gradient(90deg, #b81c1c 0%, #ff5555 100%);
+	box-shadow:
+		0 0 6px rgba(255, 60, 60, 0.8),
+		0 0 14px rgba(255, 60, 60, 0.35);
+	animation: bar-flare 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes digit-pop {
+	from {
+		transform: scale(1.25);
+		opacity: 0.55;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes bar-flare {
+	from { opacity: 1; }
+	to   { opacity: 0.55; }
+}
+</style>

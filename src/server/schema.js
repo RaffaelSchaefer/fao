@@ -120,6 +120,16 @@ SCHEMA[MESSAGE.TOGGLE_CUSTOM_TOPICS] = {
 	},
 	required: ['customOnly'],
 };
+SCHEMA[MESSAGE.SET_GAME_MODE] = {
+	$id: MESSAGE.SET_GAME_MODE,
+	properties: {
+		mode: {
+			type: 'string',
+			enum: ['classic', 'timed'],
+		},
+	},
+	required: ['mode'],
+};
 
 for (let schema of Object.values(SCHEMA)) {
 	ajv.addSchema(schema, schema.$id);

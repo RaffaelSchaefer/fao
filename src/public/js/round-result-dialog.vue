@@ -1,23 +1,37 @@
 <template>
-	<div id="round-result-dialog" class="dialog-overlay" @click.self="$emit('close')">
+	<div id="round-result-dialog" class="dialog-overlay" :class="{ 'reveal-done': revealComplete }" @click.self="$emit('close')">
 		<div class="dialog dialog-wide">
-			<div class="dialog-header">
+			<div class="dialog-header reveal-element" style="--delay: 0s">
 				<h2>Round {{ roundResult ? roundResult.round : '' }} Results</h2>
 			</div>
+
+			<!-- Skip animation button -->
+			<button v-if="!revealComplete" class="btn secondary skip-reveal" @click="skipReveal">
+				Skip
+			</button>
+
 			<div class="dialog-body">
 				<!-- Faker reveal -->
-				<div class="faker-reveal">
-					<p class="faker-label">The Faker was:</p>
-					<p class="faker-name">
-						<template v-if="roundResult">
-							{{ roundResult.fakerName }}
-							<span class="faker-status">{{ roundResult.fakerCaught ? 'Caught!' : 'Got away!' }}</span>
-						</template>
-					</p>
+				<div class="p5-faker-panel reveal-element" style="--delay: 0.4s">
+					<div class="p5-faker-accent"></div>
+					<div class="p5-faker-body">
+						<div class="p5-result-label">◆ THE FAKER WAS</div>
+						<div class="faker-name reveal-element" style="--delay: 0.8s">
+							<template v-if="roundResult">{{ roundResult.fakerName }}</template>
+						</div>
+						<div
+							v-if="roundResult"
+							class="faker-status reveal-element"
+							:class="{ caught: roundResult.fakerCaught }"
+							style="--delay: 1.1s"
+						>
+							{{ roundResult.fakerCaught ? '★ CAUGHT!' : '★ GOT AWAY!' }}
+						</div>
+					</div>
 				</div>
 
 				<!-- Scores table -->
-				<div class="scoreboard">
+				<div class="scoreboard reveal-element" style="--delay: 1.4s">
 					<h3>Scoreboard</h3>
 					<table class="score-table">
 						<thead>
@@ -30,8 +44,10 @@
 						</thead>
 						<tbody>
 							<tr
-								v-for="entry in sortedScores"
+								v-for="(entry, i) in sortedScores"
 								:key="entry.name"
+								class="reveal-row"
+								:style="{ '--row-delay': (1.7 + i * 0.15) + 's' }"
 							>
 								<td class="rank">#{{ entry.rank }}</td>
 								<td :style="{ color: getUserColor(entry.name) }">{{ entry.name }}</td>
@@ -42,7 +58,7 @@
 					</table>
 				</div>
 			</div>
-			<div class="dialog-footer dialog-actions">
+			<div class="dialog-footer dialog-actions reveal-element" style="--delay: 1.7s">
 				<button class="btn primary" @click="$emit('next-round')">
 					Next Round
 				</button>
@@ -61,6 +77,11 @@ export default {
 		roundResult: { type: Object, default: null },
 		users: { type: Array, required: true },
 		scores: { type: Object, default: () => ({}) },
+	},
+	data() {
+		return {
+			revealComplete: false,
+		};
 	},
 	computed: {
 		sortedScores() {
@@ -81,6 +102,9 @@ export default {
 		},
 	},
 	methods: {
+		skipReveal() {
+			this.revealComplete = true;
+		},
 		getUserColor(name) {
 			const COLORS = [
 				'#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
@@ -92,48 +116,99 @@ export default {
 			return COLORS[Math.abs(hash) % COLORS.length] || 'var(--grey6)';
 		},
 	},
+	mounted() {
+		// Auto-mark reveal complete after all animations finish
+		const delays = [0, 0.4, 0.8, 1.1, 1.4, 1.7, ...this.users.map((_, i) => 1.7 + i * 0.15)];
+		const maxDelay = Math.max(...delays) + 0.4; // animation duration
+		this._revealTimer = setTimeout(() => {
+			this.revealComplete = true;
+		}, maxDelay * 1000);
+	},
+	beforeDestroy() {
+		clearTimeout(this._revealTimer);
+	},
 };
 </script>
 
 <style scoped>
 #round-result-dialog {
-	z-index: 10;
+	position: fixed;
+	inset: 0;
+	background-color: rgba(11, 11, 23, 0.88);
+	backdrop-filter: blur(2px);
+	z-index: 100;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 20px;
+	overflow-y: auto;
 }
 
-.faker-reveal {
-	text-align: center;
-	margin-bottom: 16px;
-	padding: 14px;
+.dialog-wide {
+	border-radius: 0;
+	border-left: 4px solid var(--artist4);
+	background: var(--grey1);
+	border-top: 1px solid var(--grey3);
+	border-right: 1px solid var(--grey3);
+	border-bottom: 1px solid var(--grey3);
+	max-width: 520px;
+	width: 100%;
+	padding: 16px 20px;
+	position: relative;
+}
+
+/* P5 faker panel */
+.p5-faker-panel {
+	display: flex;
+	align-items: stretch;
+	overflow: hidden;
+	clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0% 100%);
 	background: var(--grey2);
-	border-radius: 10px;
-	border: 1px solid var(--grey3);
+	border: 2px solid var(--artist4);
+	margin-bottom: 14px;
 }
 
-.faker-label {
-	color: var(--grey5);
-	font-size: 12px;
+.p5-faker-accent {
+	width: 6px;
+	background: var(--artist4);
+	flex-shrink: 0;
+	box-shadow: 0 0 8px rgba(212, 255, 0, 0.5);
+}
+
+.p5-faker-body {
+	padding: 10px 14px;
+}
+
+.p5-result-label {
+	font-family: var(--display-font);
+	font-size: 11px;
+	letter-spacing: 0.14em;
+	color: var(--artist5);
 	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	font-weight: 800;
-	display: block;
-	margin: 0 0 4px;
+	margin-bottom: 3px;
 }
 
 .faker-name {
 	font-family: var(--display-font);
 	font-size: 28px;
 	color: var(--grey7);
+	line-height: 1;
 	margin: 0;
 }
 
 .faker-status {
-	font-size: 13px;
-	font-weight: 800;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	display: block;
+	font-family: var(--display-font);
+	font-size: 14px;
+	letter-spacing: 0.1em;
 	margin-top: 4px;
+}
+
+.faker-status.caught {
 	color: var(--artist4);
+}
+
+.faker-status:not(.caught) {
+	color: #ff5555;
 }
 
 .scoreboard {
@@ -141,12 +216,14 @@ export default {
 }
 
 .scoreboard h3 {
-	margin: 0 0 10px;
-	text-align: center;
-	font-size: 14px;
+	margin: 0 0 8px;
+	font-family: var(--display-font);
+	font-size: 12px;
 	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	color: var(--grey5);
+	letter-spacing: 0.14em;
+	color: var(--artist4);
+	border-bottom: 1px solid rgba(212, 255, 0, 0.2);
+	padding-bottom: 5px;
 }
 
 .score-table {
@@ -163,6 +240,15 @@ export default {
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	font-weight: 800;
+}
+
+.score-table tbody tr {
+	border-left: 3px solid transparent;
+	transition: border-color 0.12s;
+}
+
+.score-table tbody tr:hover {
+	border-left-color: var(--artist4);
 }
 
 .score-table td {
@@ -186,5 +272,74 @@ export default {
 	display: flex;
 	justify-content: center;
 	gap: 8px;
+}
+
+/* ============================================================================
+	Dramatic Reveal: CSS-only staggered animation
+============================================================================ */
+
+/* Initial state: hidden */
+.reveal-element {
+	opacity: 0;
+	transform: translateY(12px);
+	animation: reveal-slide 0.4s cubic-bezier(0.22, 1, 0.36, 1) var(--delay, 0s) both;
+}
+
+/* Scoreboard rows: slide from left */
+.reveal-row {
+	opacity: 0;
+	transform: translateX(-16px);
+	animation: reveal-row 0.35s cubic-bezier(0.22, 1, 0.36, 1) var(--row-delay, 1.7s) both;
+}
+
+/* Skip button */
+.skip-reveal {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	font-size: 11px;
+	padding: 4px 10px;
+	opacity: 1;
+	animation: reveal-fade 0.3s ease 0.2s both;
+	z-index: 20;
+}
+
+/* After reveal: show everything normally */
+#round-result-dialog.reveal-done .reveal-element,
+#round-result-dialog.reveal-done .reveal-row {
+	opacity: 1;
+	transform: none;
+	animation: none;
+}
+
+#round-result-dialog.reveal-done .skip-reveal {
+	display: none;
+}
+
+@keyframes reveal-slide {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes reveal-row {
+	from {
+		opacity: 0;
+		transform: translateX(-16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes reveal-fade {
+	from { opacity: 0; }
+	to   { opacity: 0.6; }
 }
 </style>

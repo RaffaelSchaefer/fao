@@ -19,6 +19,8 @@ function generateClientGameState() {
 		useCustomTopicsOnly: false,
 		roundResults: [],
 		lastRoundResult: null,
+		gameMode: 'classic',
+		turnTimeRemaining: 15,
 
 		getUsernames() {
 			return this.users.map((u) => u.name);

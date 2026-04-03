@@ -5,15 +5,16 @@
 	font-weight: 800;
 	text-transform: uppercase;
 	border-style: solid;
-	border-radius: 8px;
+	border-radius: 0;
 	border-width: 2px;
 	min-width: 100px;
 	line-height: 40px;
-	padding: 0 18px;
+	padding: 0 20px;
 	margin: 6px;
 	cursor: pointer;
 	position: relative;
-	transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
+	transform: skewX(-5deg);
+	transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease, filter 0.1s ease;
 
 	&.big {
 		min-width: 165px;
@@ -25,7 +26,7 @@
 		color: var(--grey5);
 		cursor: default;
 		box-shadow: none;
-		transform: none !important;
+		transform: skewX(-5deg) !important;
 	}
 	&.primary:not(:disabled) {
 		background-color: var(--artist4);
@@ -37,12 +38,12 @@
 			&:hover {
 				background-color: var(--artist3);
 				border-color: var(--artist3);
-				transform: translateY(-2px);
+				transform: skewX(-5deg) translateY(-2px);
 				box-shadow: 0 6px 0 var(--artist5), 0 0 32px var(--artistshade);
 			}
 		}
 		&:active {
-			transform: translateY(4px);
+			transform: skewX(-5deg) translateY(4px);
 			box-shadow: none;
 		}
 	}
@@ -56,12 +57,12 @@
 			&:hover {
 				color: var(--blue2);
 				border-color: var(--blue3);
-				transform: translateY(-2px);
+				transform: skewX(-5deg) translateY(-2px);
 				box-shadow: 0 6px 0 var(--blue5);
 			}
 		}
 		&:active {
-			transform: translateY(4px);
+			transform: skewX(-5deg) translateY(4px);
 			box-shadow: none;
 		}
 	}
@@ -80,6 +81,7 @@
 		font-size: 15px;
 		font-weight: 700;
 		box-shadow: none;
+		transform: none;
 
 		@media (any-hover: hover) {
 			&:hover {

@@ -13,10 +13,15 @@
 						<button
 							v-for="user in otherUsers"
 							:key="user.name"
+							class="vote-tile"
+							:class="{ selected: myVote === user.name }"
 							@click="myVote = user.name"
-							:class="{ vote: true, selected: myVote === user.name }"
 						>
-							{{ user.name }}
+							<span class="vote-tile-inner">
+								<span class="vote-marker">◆</span>
+								<span class="vote-name">{{ user.name }}</span>
+								<span class="vote-check">✓</span>
+							</span>
 						</button>
 					</div>
 				</template>
@@ -98,7 +103,28 @@ export default {
 
 <style scoped>
 #vote-dialog {
-	z-index: 10;
+	position: fixed;
+	inset: 0;
+	background-color: rgba(11, 11, 23, 0.88);
+	backdrop-filter: blur(2px);
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.dialog {
+	background: var(--grey1);
+	border: 1px solid var(--grey3);
+	max-width: 480px;
+	width: 100%;
+	padding: 16px 20px;
+}
+
+.dialog {
+	border-radius: 0;
+	border-left: 4px solid var(--artist4);
 }
 
 .vote-instruction {
@@ -114,32 +140,76 @@ export default {
 	gap: 6px;
 }
 
-.vote {
+/* P5 vote tiles */
+.vote-tile {
 	display: block;
 	width: 100%;
-	padding: 12px 16px;
-	border: 2px solid var(--grey3);
-	border-radius: 10px;
-	background: var(--grey2);
-	color: var(--grey7);
-	font-family: var(--button-font);
-	font-size: 16px;
-	font-weight: 700;
+	border: none;
 	cursor: pointer;
-	transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
-	text-align: left;
+	transform: skewX(-7deg);
+	background: var(--grey2);
+	border: 2px solid var(--grey3);
+	overflow: hidden;
+	transition: border-color 0.15s, background 0.15s;
 }
 
-.vote:hover {
-	border-color: var(--grey4);
-	background: var(--grey3);
+.vote-tile-inner {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 11px 14px;
+	transform: skewX(7deg);
 }
 
-.vote.selected {
+.vote-tile:hover {
+	border-color: var(--grey5);
+}
+
+.vote-tile.selected {
+	background: var(--artist4);
 	border-color: var(--artist4);
-	background: rgba(212, 255, 0, 0.1);
-	box-shadow: 0 0 12px rgba(212, 255, 0, 0.2);
-	color: var(--artist3);
+	animation: p5-tile-flash 0.2s ease;
+}
+
+.vote-marker {
+	color: var(--artist4);
+	font-size: 9px;
+	flex-shrink: 0;
+}
+
+.vote-tile.selected .vote-marker {
+	color: #0b0b17;
+}
+
+.vote-name {
+	font-family: var(--display-font);
+	font-size: 18px;
+	color: var(--grey7);
+	flex: 1;
+	text-align: left;
+	transition: color 0.15s;
+}
+
+.vote-tile.selected .vote-name {
+	color: #0b0b17;
+}
+
+.vote-check {
+	font-size: 16px;
+	font-weight: 900;
+	color: #0b0b17;
+	opacity: 0;
+	transition: opacity 0.15s;
+	margin-left: auto;
+}
+
+.vote-tile.selected .vote-check {
+	opacity: 1;
+}
+
+@keyframes p5-tile-flash {
+	0%   { filter: brightness(2.5); }
+	100% { filter: brightness(1); }
 }
 
 .dialog-actions {

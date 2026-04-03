@@ -100,7 +100,7 @@ const MessageHandlers = {
 			sock.emit(MESSAGE.START_GAME, { err: 'Only the host can start the game' });
 			return;
 		}
-		rm.startNewRound();
+		rm.startNewRound(io, () => broadcastRoomState(io, rm, MESSAGE.NEW_TURN));
 		broadcastRoomState(io, rm, MESSAGE.START_GAME);
 	},
 	[MESSAGE.NEXT_ROUND](io, sock, data) {
@@ -111,7 +111,7 @@ const MessageHandlers = {
 			sock.emit(MESSAGE.NEXT_ROUND, { err: 'Can only go to next round after vote result phase' });
 			return;
 		}
-		rm.startNewRound();
+		rm.startNewRound(io, () => broadcastRoomState(io, rm, MESSAGE.NEW_TURN));
 		broadcastRoomState(io, rm, MESSAGE.START_GAME);
 	},
 
@@ -122,9 +122,21 @@ const MessageHandlers = {
 		GamePrecond.isUsersTurn(sock.user);
 		let rm = sock.user.gameRoom;
 		rm.addStroke(sock.user.name, data.points);
-		rm.nextTurn();
+		rm.nextTurn(io, () => broadcastRoomState(io, rm, MESSAGE.NEW_TURN));
 
 		broadcastRoomState(io, rm, MESSAGE.NEW_TURN);
+	},
+
+	[MESSAGE.SET_GAME_MODE](io, sock, data) {
+		GamePrecond.sockHasUser(sock);
+		GamePrecond.userIsInARoom(sock.user);
+		let rm = sock.user.gameRoom;
+		if (rm.host.name !== sock.user.name) {
+			sock.emit(MESSAGE.SET_GAME_MODE, { err: 'Only the host can change game mode' });
+			return;
+		}
+		rm.setGameMode(data.mode, io);
+		broadcastRoomState(io, rm, MESSAGE.SET_GAME_MODE);
 	},
 
 	[MESSAGE.RETURN_TO_SETUP](io, sock, data) {

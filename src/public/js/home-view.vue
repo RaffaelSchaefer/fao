@@ -3,6 +3,7 @@
 		<div class="view-container">
 			<div id="title-banner" class="stripe align-center">
 				<div class="stripe-content">
+					<div class="p5-pre-title">◆ PARTY DRAWING GAME</div>
 					<h1 class="title">Fake Artist Online</h1>
 				</div>
 			</div>
@@ -58,6 +59,15 @@ export default {
 	background: linear-gradient(90deg, var(--artist4) 0%, rgba(212, 255, 0, 0.3) 60%, transparent 100%);
 	border-radius: 2px;
 	margin-top: 4px;
+}
+
+.p5-pre-title {
+	font-family: var(--display-font);
+	font-size: 12px;
+	letter-spacing: 0.2em;
+	color: var(--artist5);
+	text-transform: uppercase;
+	margin-bottom: 4px;
 }
 
 #about-content {

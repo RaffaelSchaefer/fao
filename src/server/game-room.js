@@ -31,6 +31,11 @@ class GameRoom {
 		// Custom topics
 		this.customTopics = [];
 		this.useCustomTopicsOnly = false;
+
+		// Timed mode
+		this.gameMode = 'classic';
+		this.turnTimer = null;
+		this.turnTimeRemaining = 15;
 	}
 	addUser(user, isHost = false) {
 		if (this.isFull()) {
@@ -66,7 +71,7 @@ class GameRoom {
 		return this.users.find((p) => p.name === name);
 	}
 
-	startNewRound() {
+	startNewRound(io, callback) {
 		this.round++;
 		this.shuffleUsers();
 		this.phase = GAME_PHASE.PLAY;
@@ -78,8 +83,12 @@ class GameRoom {
 		this.strokes = [];
 		this.votes = {};
 		console.log(`Rm${this.roomCode} New round ${this.round}`);
+		if (this.gameMode === 'timed') {
+			this.startTimedTurn(io, callback);
+		}
 	}
 	invokeSetup() {
+		this.stopTimedTurn();
 		console.log(`Rm${this.roomCode} Force setup`);
 		this.phase = GAME_PHASE.SETUP;
 		// Reset game state
@@ -112,16 +121,68 @@ class GameRoom {
 		this.strokes.push(new Stroke(username, points));
 		return this.strokes;
 	}
-	nextTurn() {
+	nextTurn(io, callback) {
 		if (this.isGameInProgress()) {
+			if (this.phase === GAME_PHASE.VOTE) {
+				// already voting, skip
+				return this.turn;
+			}
 			this.turn++;
 			if (this.turn - 1 >= this.users.length * 2) {
 				// 2 rounds per user
+				this.stopTimedTurn();
 				this.phase = GAME_PHASE.VOTE;
+			} else if (this.gameMode === 'timed') {
+				this.turnTimeRemaining = 15;
+				this.startTimedTurn(io, callback);
 			}
 			return this.turn;
 		}
 		return undefined;
+	}
+	turnTimerExpired(io, callback) {
+		console.log(`Rm${this.roomCode} Turn timer expired, turn ${this.turn}`);
+		this.nextTurn(io, callback);
+		if (this.phase === GAME_PHASE.PLAY) {
+			// Still in play, broadcast the turn change
+			if (callback) callback();
+		}
+	}
+	startTimedTurn(io, callback) {
+		this.stopTimedTurn();
+		this.turnTimeRemaining = 15;
+		this.turnTimer = setInterval(() => {
+			this.turnTimeRemaining--;
+			// Broadcast timer update
+			if (io) {
+				io.in(this.roomCode).emit('TURN_TIMER_UPDATE', {
+					roomState: ClientAdapter.generateStateJson(this, [
+						'turnTimeRemaining',
+						'whoseTurn',
+						'turn',
+					]),
+				});
+			}
+			if (this.turnTimeRemaining <= 0) {
+				this.turnTimerExpired(io, callback);
+			}
+		}, 1000);
+	}
+	stopTimedTurn() {
+		if (this.turnTimer) {
+			clearInterval(this.turnTimer);
+			this.turnTimer = null;
+		}
+	}
+	setGameMode(mode, io) {
+		this.gameMode = mode;
+		if (this.phase === GAME_PHASE.PLAY) {
+			this.stopTimedTurn();
+			if (mode === 'timed') {
+				this.startTimedTurn(io);
+			}
+		}
+		return this.gameMode;
 	}
 	isGameInProgress() {
 		return this.phase === GAME_PHASE.PLAY || this.phase === GAME_PHASE.VOTE;
@@ -281,6 +342,8 @@ const ClientAdapter = {
 			customTopics: gameRoom.customTopics,
 			useCustomTopicsOnly: gameRoom.useCustomTopicsOnly,
 			roundResults: gameRoom.roundResults,
+			gameMode: gameRoom.gameMode,
+			turnTimeRemaining: gameRoom.turnTimeRemaining,
 		};
 		if (pickFields) {
 			res = _.pick(res, pickFields);

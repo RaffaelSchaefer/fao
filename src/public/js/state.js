@@ -78,6 +78,7 @@ const Store = {
 	submitAddCustomTopic,
 	submitRemoveCustomTopic,
 	submitToggleCustomOnly,
+	submitSetGameMode,
 };
 
 // Called when a round result arrives
@@ -147,6 +148,8 @@ handleSocket(MESSAGE.RETURN_TO_SETUP);
 handleSocket(MESSAGE.ADD_CUSTOM_TOPIC);
 handleSocket(MESSAGE.REMOVE_CUSTOM_TOPIC);
 handleSocket(MESSAGE.TOGGLE_CUSTOM_TOPICS);
+handleSocket(MESSAGE.SET_GAME_MODE);
+handleSocket(MESSAGE.TURN_TIMER_UPDATE);
 handleSocket(
 	MESSAGE.VOTE_RESULT,
 	function(data) {
@@ -226,6 +229,11 @@ function submitRemoveCustomTopic(index) {
 function submitToggleCustomOnly(customOnly) {
 	socket.emit(MESSAGE.TOGGLE_CUSTOM_TOPICS, {
 		customOnly: customOnly,
+	});
+}
+function submitSetGameMode(mode) {
+	socket.emit(MESSAGE.SET_GAME_MODE, {
+		mode: mode,
 	});
 }
 

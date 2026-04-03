@@ -21,6 +21,7 @@ body {
 
 #wrapper {
 	height: 100%;
+	position: relative;
 	background-color: var(--grey0);
 	// Subtle dot-grid atmosphere
 	background-image:
@@ -28,6 +29,20 @@ body {
 		radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
 	background-size: 100% 100%, 28px 28px;
 	color: var(--grey6);
+}
+
+// Persona 5 speed lines — global, all screens
+#wrapper::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	background: repeating-conic-gradient(
+		from 0deg at 50% 110%,
+		transparent 0deg 11.4deg,
+		rgba(212, 255, 0, 0.016) 11.4deg 12deg
+	);
+	pointer-events: none;
+	z-index: 0;
 }
 
 h1,

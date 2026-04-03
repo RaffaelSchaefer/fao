@@ -1,17 +1,30 @@
 <template>
 	<div id="home-menu" class="flex-center">
 		<div id="first-prompt-menu" class="menu" v-show="tab === 'main'">
-			<button id="goto-create-menu" class="btn big primary" @click="setTab('create')">
-				New Game
-			</button>
-			<div style="clear: both"></div>
-			<button id="goto-join-menu" class="btn big primary" @click="setTab('join')">
-				Join Game
-			</button>
-			<div style="clear: both"></div>
-			<button class="btn big secondary" @click="gotoRules()">Rules</button>
-			<div style="clear: both"></div>
-			<button class="btn big secondary" @click="gotoFaq()">Faq</button>
+			<div class="p5-main-tiles">
+				<button class="p5-cmd-tile primary-tile" @click="setTab('create')">
+					<span class="tile-inner">
+						<span class="tile-icon">🎨</span>
+						<span class="tile-name">New Game</span>
+						<span class="tile-arrow">▶</span>
+					</span>
+				</button>
+				<button class="p5-cmd-tile" @click="setTab('join')">
+					<span class="tile-inner">
+						<span class="tile-icon">🔑</span>
+						<span class="tile-name">Join Game</span>
+						<span class="tile-arrow">▶</span>
+					</span>
+				</button>
+			</div>
+			<div class="p5-nav-list">
+				<button class="p5-nav-item" @click="gotoRules()">
+					<span class="p5-nav-marker">▶</span> Rules
+				</button>
+				<button class="p5-nav-item" @click="gotoFaq()">
+					<span class="p5-nav-marker">▶</span> FAQ
+				</button>
+			</div>
 		</div>
 
 		<div id="create-game-menu" class="menu" v-show="tab === 'create'">
@@ -137,3 +150,114 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+.menu {
+	width: 100%;
+	max-width: 340px;
+}
+
+/* P5 command tiles */
+.p5-main-tiles {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 14px;
+}
+
+.p5-cmd-tile {
+	width: 100%;
+	border: none;
+	cursor: pointer;
+	transform: skewX(-7deg);
+	background: var(--grey1);
+	border: 2px solid var(--grey3);
+	transition: border-color 0.15s, background 0.15s, filter 0.15s;
+	overflow: hidden;
+}
+
+.p5-cmd-tile .tile-inner {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 13px 18px;
+	transform: skewX(7deg);
+}
+
+.p5-cmd-tile:hover {
+	border-color: var(--grey5);
+}
+
+.p5-cmd-tile.primary-tile {
+	background: var(--artist4);
+	border-color: var(--artist4);
+	box-shadow: 0 0 16px rgba(212, 255, 0, 0.25);
+}
+
+.p5-cmd-tile.primary-tile:hover {
+	filter: brightness(1.08);
+}
+
+.tile-icon {
+	font-size: 22px;
+	line-height: 1;
+}
+
+.tile-name {
+	font-family: var(--display-font);
+	font-size: 22px;
+	color: var(--grey6);
+	flex: 1;
+	text-align: left;
+}
+
+.p5-cmd-tile.primary-tile .tile-name {
+	color: #0b0b17;
+}
+
+.tile-arrow {
+	color: var(--grey5);
+	font-size: 11px;
+}
+
+.p5-cmd-tile.primary-tile .tile-arrow {
+	color: rgba(11, 11, 23, 0.5);
+}
+
+/* P5 nav items (Rules / FAQ) */
+.p5-nav-list {
+	display: flex;
+	gap: 20px;
+	justify-content: center;
+}
+
+.p5-nav-item {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-family: var(--display-font);
+	font-size: 16px;
+	color: var(--grey5);
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	transition: color 0.12s;
+	padding: 4px 0;
+}
+
+.p5-nav-item:hover {
+	color: var(--artist4);
+}
+
+.p5-nav-marker {
+	font-size: 9px;
+	color: var(--artist4);
+}
+
+/* Form sections */
+.form-actions {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 12px;
+}
+</style>
