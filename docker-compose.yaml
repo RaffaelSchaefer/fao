@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   fake-artist-online:
     build:
@@ -8,6 +6,21 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 384m
+    cpus: "0.50"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

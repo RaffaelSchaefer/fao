@@ -10,7 +10,8 @@
 	"scripts": {
 		"clean": "rm -rf dist/ .vite/ playwright-report/ test-results/",
 		"dev": "concurrently -k \"tsx src/server/server.js\" \"vp dev\"",
-		"build": "tsc -p tsconfig.server.json && vp build",
+		"build": "tsc -p tsconfig.server.json && vp build && npm run build:runtime-assets",
+		"build:runtime-assets": "mkdir -p dist/server/prompts && cp src/server/prompts/prompts.csv dist/server/prompts/prompts.csv",
 		"build:server": "tsc -p tsconfig.server.json",
 		"start": "node ./dist/server/server.js",
 		"test": "vp test && playwright test",
@@ -24,13 +25,9 @@
 		"ajv": "^6.10.0",
 		"compression": "^1.7.4",
 		"csv-parse": "^6.1.0",
-		"dotenv": "^6.2.0",
 		"express": "^4.16.3",
 		"lodash": "^4.17.21",
-		"normalize.css": "^8.0.1",
-		"socket.io": "^4.8.1",
-		"socket.io-client": "^4.8.1",
-		"vue": "^3.5.13"
+		"socket.io": "^4.8.1"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.52.0",
@@ -40,11 +37,14 @@
 		"@vitejs/plugin-vue": "^6.0.1",
 		"@voidzero-dev/vite-plus-core": "latest",
 		"concurrently": "^9.1.2",
+		"normalize.css": "^8.0.1",
+		"socket.io-client": "^4.8.1",
 		"tailwindcss": "^4.2.2",
 		"tsx": "^4.19.2",
 		"typescript": "^5.8.3",
 		"vite-plus": "latest",
 		"vitest": "npm:@voidzero-dev/vite-plus-test@latest",
+		"vue": "^3.5.13",
 		"vue-tsc": "^2.2.8"
 	},
 	"overrides": {
