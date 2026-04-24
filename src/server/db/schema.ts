@@ -1,4 +1,5 @@
 import {
+	bigint,
 	boolean,
 	index,
 	integer,
@@ -66,6 +67,13 @@ export const verification = pgTable('verification', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+export const rateLimit = pgTable('rate_limit', {
+	id: text('id').primaryKey(),
+	key: text('key').notNull().unique(),
+	count: integer('count').notNull(),
+	lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
+});
+
 export const gameSessions = pgTable(
 	'game_sessions',
 	{
@@ -113,6 +121,7 @@ export const schema = {
 	session,
 	account,
 	verification,
+	rateLimit,
 	gameSessions,
 	gameParticipants,
 };
