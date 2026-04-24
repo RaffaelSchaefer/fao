@@ -3,10 +3,11 @@
 FROM node:22-bookworm-slim AS deps
 
 WORKDIR /app
+ENV NODE_ENV=development
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --legacy-peer-deps
+RUN --mount=type=cache,target=/root/.npm npm ci --include=dev --legacy-peer-deps
 
 FROM deps AS builder
 
