@@ -6,6 +6,14 @@ import GAME_PHASE from '../../common/game-phase.js';
 import MESSAGE from '../../common/message.js';
 import { generateClientGameState, type ClientGameState } from './client-game.js';
 import { validateUsername } from '../../common/util.js';
+import {
+	getAuthConfig,
+	getCurrentSession,
+	signInWithDiscord,
+	signOut,
+	type AuthConfig,
+	type AuthSession,
+} from './auth-client.js';
 import type RelativePoint from '../../common/relative-point.js';
 
 const socket: Socket = io();
@@ -16,6 +24,12 @@ type StoreWarning = 'createWarning' | 'joinWarning';
 interface StoreState {
 	username: string;
 	roomCode: string;
+	authSession: AuthSession | null;
+	authLoading: boolean;
+	authConfig: AuthConfig;
+	history: GameHistoryEntry[];
+	historyWarning?: string;
+	homeTab: 'main' | 'create' | 'join';
 	sfxDisabled: boolean;
 	view: ViewName;
 	previousView: ViewName;
@@ -23,11 +37,34 @@ interface StoreState {
 	createWarning?: string;
 	joinWarning?: string;
 	gameConnection: ConnectionState;
+	lobbyActivity: LobbyActivity[];
+	lobbyEmotes: LobbyEmote[];
 }
+
+type LobbyActivity = {
+	id: string;
+	kind: string;
+	username: string;
+	text: string;
+};
+
+type LobbyEmote = {
+	id: string;
+	username: string;
+	emoji: string;
+};
 
 interface StoreShape {
 	state: StoreState;
 	setUsername(username: string): void;
+	clearUsername(): void;
+	refreshAuth(): Promise<void>;
+	signInDiscord(): Promise<void>;
+	signOutDiscord(): Promise<void>;
+	signOutAndLeaveRoom(): Promise<void>;
+	fetchHistory(): Promise<void>;
+	inviteUrl(): string;
+	copyInvite(): Promise<void>;
 	toggleSfx(): void;
 	setView(view: ViewName): void;
 	setGameState(newGameState?: ClientGameState): void;
@@ -43,15 +80,24 @@ interface StoreShape {
 	submitReturnToSetup(): void;
 	submitVote(targetName: string): void;
 	submitAddCustomTopic(keyword: string, hint?: string): void;
-	submitRemoveCustomTopic(index: number): void;
+	submitRemoveCustomTopic(topicId: string): void;
 	submitToggleCustomOnly(customOnly: boolean): void;
 	submitSetGameMode(mode: 'classic' | 'timed'): void;
+	submitLobbyEmote(emoji: string): void;
 	onRoundResult(result: unknown): void;
 }
 
 const state = reactive<StoreState>({
 	username: localStorage.username || '',
-	roomCode: '',
+	roomCode: new URLSearchParams(window.location.search).get('room') || '',
+	authSession: null,
+	authLoading: false,
+	authConfig: {
+		discordEnabled: false,
+	},
+	history: [],
+	historyWarning: undefined,
+	homeTab: new URLSearchParams(window.location.search).get('room') ? 'join' : 'main',
 	sfxDisabled: localStorage.sfxDisabled === 'true',
 	view: VIEW.HOME,
 	previousView: VIEW.HOME,
@@ -59,11 +105,21 @@ const state = reactive<StoreState>({
 	createWarning: undefined,
 	joinWarning: undefined,
 	gameConnection: CONNECTION_STATE.DISCONNECT,
+	lobbyActivity: [],
+	lobbyEmotes: [],
 });
 
 const Store: StoreShape = {
 	state,
 	setUsername,
+	clearUsername,
+	refreshAuth,
+	signInDiscord,
+	signOutDiscord,
+	signOutAndLeaveRoom,
+	fetchHistory,
+	inviteUrl,
+	copyInvite,
 	toggleSfx,
 	setView,
 	setGameState,
@@ -82,12 +138,139 @@ const Store: StoreShape = {
 	submitRemoveCustomTopic,
 	submitToggleCustomOnly,
 	submitSetGameMode,
+	submitLobbyEmote,
 	onRoundResult,
 };
 
 function setUsername(username: string) {
 	Store.state.username = username;
 	localStorage.username = username;
+}
+
+function clearUsername() {
+	Store.state.username = '';
+	delete localStorage.username;
+}
+
+function usernameFromAuthName(name?: string | null) {
+	const sanitized = (name || '')
+		.replace(/[^0-9a-zA-Z ]+/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.slice(0, 15);
+	return sanitized || 'Discord User';
+}
+
+async function refreshAuth() {
+	Store.state.authLoading = true;
+	try {
+		const [authConfig, session] = await Promise.all([getAuthConfig(), getCurrentSession()]);
+		Store.state.authConfig = authConfig;
+		Store.state.authSession = session;
+		if (session?.user?.name && !Store.state.username) {
+			setUsername(usernameFromAuthName(session.user.name));
+		}
+		if (session?.user) {
+			await fetchHistory();
+		} else {
+			Store.state.history = [];
+		}
+	} catch (error) {
+		console.warn('Unable to refresh auth session', error);
+		Store.state.authConfig = {
+			discordEnabled: false,
+		};
+		Store.state.authSession = null;
+		Store.state.history = [];
+	} finally {
+		Store.state.authLoading = false;
+	}
+}
+
+async function signInDiscord() {
+	if (!Store.state.authConfig.discordEnabled) {
+		console.warn('Discord auth is not configured');
+		return;
+	}
+	await signInWithDiscord();
+}
+
+async function signOutDiscord() {
+	await signOut();
+	Store.state.authSession = null;
+	Store.state.history = [];
+	clearUsername();
+	setGameState(undefined);
+}
+
+async function signOutAndLeaveRoom() {
+	const hadGameState = Boolean(Store.state.gameState);
+	if (hadGameState) {
+		submitLeaveGame();
+	}
+	await signOut();
+	Store.state.authSession = null;
+	Store.state.history = [];
+	clearUsername();
+	setGameState(undefined);
+}
+
+type GameHistoryEntry = {
+	id: string;
+	roomCode: string;
+	gameMode: string;
+	finalScores: Record<string, number>;
+	winnerNames: string[];
+	finishedAt?: string;
+	createdAt?: string;
+};
+
+async function fetchHistory() {
+	Store.state.historyWarning = undefined;
+	try {
+		const response = await fetch('/api/me/history', {
+			credentials: 'include',
+		});
+		if (response.status === 401) {
+			Store.state.history = [];
+			return;
+		}
+		if (!response.ok) {
+			const body = await response.json().catch(() => ({}));
+			Store.state.historyWarning = body.err || 'Game history is unavailable';
+			Store.state.history = [];
+			return;
+		}
+		const body = await response.json();
+		Store.state.history = body.history || [];
+	} catch (error) {
+		console.warn('Unable to fetch game history', error);
+		Store.state.historyWarning = 'Game history is unavailable';
+		Store.state.history = [];
+	}
+}
+
+function inviteUrl() {
+	const roomCode = Store.state.gameState?.roomCode || Store.state.roomCode;
+	if (!roomCode) {
+		return window.location.origin;
+	}
+	const url = new URL(window.location.href);
+	url.searchParams.set('room', roomCode);
+	return url.toString();
+}
+
+async function copyInvite() {
+	const url = inviteUrl();
+	if (navigator.share) {
+		await navigator.share({
+			title: 'Fake Artist Online',
+			text: 'Join my Fake Artist Online room',
+			url,
+		});
+		return;
+	}
+	await navigator.clipboard.writeText(url);
 }
 
 function toggleSfx() {
@@ -103,6 +286,8 @@ function setView(view: ViewName) {
 function setGameState(newGameState?: ClientGameState) {
 	if (!newGameState) {
 		Store.state.gameState = undefined;
+		Store.state.lobbyActivity = [];
+		Store.state.lobbyEmotes = [];
 		setGameConnection(CONNECTION_STATE.DISCONNECT);
 		setView(VIEW.HOME);
 		return;
@@ -120,6 +305,8 @@ function setGameState(newGameState?: ClientGameState) {
 		Store.state.gameState.phase === GAME_PHASE.PLAY ||
 		Store.state.gameState.phase === GAME_PHASE.VOTE
 	) {
+		Store.state.lobbyActivity = [];
+		Store.state.lobbyEmotes = [];
 		setView(VIEW.GAME);
 	}
 }
@@ -205,9 +392,9 @@ function submitAddCustomTopic(keyword: string, hint?: string) {
 	});
 }
 
-function submitRemoveCustomTopic(index: number) {
+function submitRemoveCustomTopic(topicId: string) {
 	socket.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, {
-		index,
+		topicId,
 	});
 }
 
@@ -223,6 +410,12 @@ function submitSetGameMode(mode: 'classic' | 'timed') {
 	});
 }
 
+function submitLobbyEmote(emoji: string) {
+	socket.emit(MESSAGE.LOBBY_EMOTE, {
+		emoji,
+	});
+}
+
 function onRoundResult(result: unknown) {
 	if (Store.state.gameState) {
 		Store.state.gameState.lastRoundResult = result;
@@ -235,7 +428,23 @@ type MessagePayload = {
 	roomState?: ClientGameState;
 	roundResult?: unknown;
 	err?: string;
+	emoji?: string;
+	text?: string;
+	kind?: string;
 };
+
+function pushLobbyActivity(activity: Omit<LobbyActivity, 'id'>) {
+	const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+	Store.state.lobbyActivity = [...Store.state.lobbyActivity.slice(-7), { ...activity, id }];
+}
+
+function pushLobbyEmote(username: string, emoji: string) {
+	const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+	Store.state.lobbyEmotes = [...Store.state.lobbyEmotes, { id, username, emoji }];
+	window.setTimeout(() => {
+		Store.state.lobbyEmotes = Store.state.lobbyEmotes.filter((entry) => entry.id !== id);
+	}, 1400);
+}
 
 function handleSocket(
 	messageName: string,
@@ -271,6 +480,10 @@ handleSocket(
 	(data) => {
 		if (data.username) {
 			setUsername(data.username);
+			return;
+		}
+		if (data.roomState?.hostName) {
+			setUsername(data.roomState.hostName);
 		}
 	},
 	(errMsg) => setWarning('createWarning', errMsg)
@@ -279,9 +492,6 @@ handleSocket(
 handleSocket(
 	MESSAGE.JOIN_ROOM,
 	(data) => {
-		if (data.username !== Store.state.username) {
-			return;
-		}
 		setWarning('joinWarning');
 		if (data.rejoin === true) {
 			console.log('Game reconnect success');
@@ -294,12 +504,17 @@ handleSocket(MESSAGE.LEAVE_ROOM);
 handleSocket(MESSAGE.USER_LEFT);
 handleSocket(MESSAGE.START_GAME);
 handleSocket(MESSAGE.NEW_TURN);
-handleSocket(MESSAGE.RETURN_TO_SETUP);
+handleSocket(MESSAGE.RETURN_TO_SETUP, () => {
+	if (Store.state.authSession) {
+		void fetchHistory();
+	}
+});
 handleSocket(MESSAGE.ADD_CUSTOM_TOPIC);
 handleSocket(MESSAGE.REMOVE_CUSTOM_TOPIC);
 handleSocket(MESSAGE.TOGGLE_CUSTOM_TOPICS);
 handleSocket(MESSAGE.SET_GAME_MODE);
 handleSocket(MESSAGE.TURN_TIMER_UPDATE);
+handleSocket(MESSAGE.LOBBY_COUNTDOWN_UPDATE);
 handleSocket(
 	MESSAGE.VOTE_RESULT,
 	(data) => {
@@ -310,6 +525,22 @@ handleSocket(
 		Store.onRoundResult(roundResult);
 	}
 );
+socket.on(MESSAGE.LOBBY_ACTIVITY, (data: MessagePayload) => {
+	if (!data.username || !data.text || !data.kind) {
+		return;
+	}
+	pushLobbyActivity({
+		username: data.username,
+		text: data.text,
+		kind: data.kind,
+	});
+});
+socket.on(MESSAGE.LOBBY_EMOTE, (data: MessagePayload) => {
+	if (!data.username || !data.emoji) {
+		return;
+	}
+	pushLobbyEmote(data.username, data.emoji);
+});
 
 socket.on('disconnect', () => {
 	Store.state.gameConnection = CONNECTION_STATE.DISCONNECT;
@@ -376,5 +607,7 @@ window.faodbg = {
 		socket.connect();
 	},
 };
+
+void refreshAuth();
 
 export default Store;

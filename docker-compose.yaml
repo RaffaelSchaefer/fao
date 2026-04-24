@@ -3,11 +3,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
     environment:
-      NODE_ENV: production
-      PORT: 3000
-    expose:
-      - "3000"
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      DATABASE_URL: postgres://${POSTGRES_USER:-fao}:${POSTGRES_PASSWORD:-fao}@postgres:5432/${POSTGRES_DB:-fake_artist_online}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-development-only-change-me-please}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-http://localhost:3000/api/auth/callback/discord}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     init: true
     read_only: true
@@ -24,3 +33,24 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fake_artist_online}
+      POSTGRES_USER: ${POSTGRES_USER:-fao}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fao}
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-fao} -d ${POSTGRES_DB:-fake_artist_online}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  postgres-data:

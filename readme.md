@@ -18,6 +18,31 @@ npm install
 npm run dev
 ```
 
+For `npm run dev`, Better Auth should use the browser origin. Set `BETTER_AUTH_URL=http://127.0.0.1:5173` when using the Vite dev server.
+
+For Discord OAuth, register the callback URI shown by your auth config. By default this app uses:
+
+```bash
+${BETTER_AUTH_URL}/api/auth/callback/discord
+```
+
+If Discord needs an exact fixed callback, set `DISCORD_REDIRECT_URI` explicitly.
+
+## Docker Compose
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+This starts the app and Postgres together. The server waits for Postgres, runs the Drizzle migrations automatically, and then starts listening on `http://localhost:3000`.
+
+For Docker Compose with Discord OAuth, the default callback is:
+
+```bash
+http://localhost:3000/api/auth/callback/discord
+```
+
 ## Common Commands
 
 ```bash
@@ -45,7 +70,7 @@ test/server/     Server contract tests
 
 - Keep the UI mobile-friendly. Small screens should remain usable.
 - The game is intentionally minimal. Avoid adding unnecessary rules or complexity.
-- The app is in-memory only, with no database.
+- Game rooms are still in-memory, but auth and game history use Postgres when `DATABASE_URL` is configured.
 - Realtime behavior should stay covered by server and browser tests.
 
 ## Support

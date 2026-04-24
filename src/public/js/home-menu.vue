@@ -1,15 +1,36 @@
 <template>
 	<div id="home-menu" class="flex-center">
-		<div id="first-prompt-menu" class="menu" v-show="tab === 'main'">
+		<div id="first-prompt-menu" class="menu" v-show="store.homeTab === 'main'">
+			<div class="account-strip">
+				<div v-if="showAccountChip" class="account-chip">
+					<img class="account-avatar" :src="accountAvatar" alt="" />
+					<div class="account-copy">
+						<span class="p5-label-inline">{{ accountLabel }}</span>
+						<strong>{{ activeName }}</strong>
+					</div>
+					<button class="btn tertiary mini-btn" @click="logout">Logout</button>
+				</div>
+			</div>
+
 			<div class="p5-main-tiles">
-				<button class="p5-cmd-tile primary-tile" @click="setTab('create')">
+				<button
+					type="button"
+					id="new-game-menu-btn"
+					class="p5-cmd-tile primary-tile"
+					@click.stop.prevent="createGame"
+				>
 					<span class="tile-inner">
 						<span class="tile-icon">🎨</span>
 						<span class="tile-name">New Game</span>
 						<span class="tile-arrow">▶</span>
 					</span>
 				</button>
-				<button class="p5-cmd-tile" @click="setTab('join')">
+				<button
+					type="button"
+					id="join-game-menu-btn"
+					class="p5-cmd-tile"
+					@click.stop.prevent="setTab('join')"
+				>
 					<span class="tile-inner">
 						<span class="tile-icon">🔑</span>
 						<span class="tile-name">Join Game</span>
@@ -25,62 +46,29 @@
 					<span class="p5-nav-marker">▶</span> FAQ
 				</button>
 			</div>
-		</div>
 
-		<div id="create-game-menu" class="menu" v-show="tab === 'create'">
-			<div class="warning" v-show="store.createWarning !== undefined">
-				<p>{{ store.createWarning }}</p>
+			<div v-if="store.authSession?.user" class="history-panel">
+				<div class="p5-section-header">★ RECENT GAMES</div>
+				<p v-if="store.historyWarning" class="history-muted">{{ store.historyWarning }}</p>
+				<p v-else-if="store.history.length === 0" class="history-muted">
+					Finished games will land here.
+				</p>
+				<ul v-else class="history-list">
+					<li v-for="entry in store.history" :key="entry.id" class="history-item">
+						<span class="history-room">#{{ entry.roomCode }}</span>
+						<span class="history-winners">{{ winners(entry) }}</span>
+						<span class="history-mode">{{ entry.gameMode }}</span>
+					</li>
+				</ul>
 			</div>
-			<form id="create-game-form" @submit.prevent="createGame">
-				<input
-					type="text"
-					id="create-username-input"
-					class="username-input"
-					placeholder="Username"
-					required
-					autocomplete="off"
-					v-model="store.username"
-					maxlength="15"
-				/>
-				<div style="clear: both"></div>
-				<div class="form-actions">
-					<button
-						type="button"
-						id="create-game-back-btn"
-						class="btn tertiary"
-						@click="setTab('main')"
-					>
-						Back
-					</button>
-					<button
-						type="submit"
-						id="create-game-btn"
-						class="btn primary"
-						value=""
-						:disabled="!Boolean(store.username)"
-					>
-						Create
-					</button>
-				</div>
-			</form>
 		</div>
 
-		<div id="join-game-menu" class="menu" v-show="tab === 'join'">
+		<div id="join-game-menu" class="menu" v-show="store.homeTab === 'join'">
 			<div class="warning" v-show="store.joinWarning !== undefined">
 				<p>{{ store.joinWarning }}</p>
 			</div>
 			<form id="join-game-form" @submit.prevent="joinGame">
-				<input
-					type="text"
-					id="join-username-input"
-					class="username-input"
-					placeholder="Username"
-					required
-					autocomplete="off"
-					v-model="store.username"
-					maxlength="15"
-				/>
-				<div style="clear: both"></div>
+				<p class="menu-meta">Joining as <strong>{{ activeName }}</strong></p>
 				<input
 					type="tel"
 					id="join-code"
@@ -103,7 +91,7 @@
 						type="submit"
 						id="join-game-btn"
 						class="btn primary"
-						:disabled="!Boolean(store.username && store.roomCode)"
+						:disabled="!Boolean(activeName && store.roomCode)"
 					>
 						Join
 					</button>
@@ -115,6 +103,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { resolveAvatarUrl } from '../../common/avatar.js';
 import Store from './state.js';
 import VIEW from './view.js';
 
@@ -124,12 +113,36 @@ export default defineComponent({
 	data() {
 		return {
 			store: Store.state,
-			tab: 'main',
 		};
 	},
+	computed: {
+		activeName(): string {
+			return this.store.username.trim();
+		},
+		showAccountChip(): boolean {
+			return Boolean(this.activeName);
+		},
+		accountLabel(): string {
+			return this.store.authSession?.user ? '◆ SIGNED IN' : '◆ GUEST';
+		},
+		accountAvatar(): string {
+			return resolveAvatarUrl({
+				authUserId: this.store.authSession?.user.id,
+				displayName: this.activeName,
+			});
+		},
+	},
 	methods: {
+		logout(): void {
+			if (this.store.authSession?.user) {
+				void Store.signOutDiscord();
+				return;
+			}
+			Store.clearUsername();
+			Store.state.homeTab = this.store.roomCode ? 'join' : 'main';
+		},
 		setTab(value: 'main' | 'create' | 'join'): void {
-			this.tab = value;
+			Store.state.homeTab = value;
 		},
 		gotoRules(): void {
 			Store.setView(VIEW.RULES);
@@ -138,15 +151,16 @@ export default defineComponent({
 			Store.setView(VIEW.FAQ);
 		},
 		createGame(): void {
-			Store.submitCreateGame(Store.state.username);
+			Store.submitCreateGame(this.activeName);
 		},
 		joinGame(): void {
-			Store.submitJoinGame(Store.state.roomCode, Store.state.username);
+			Store.submitJoinGame(Store.state.roomCode, this.activeName);
 		},
-	},
-	watch: {
-		'store.username'(val: string): void {
-			Store.setUsername(val ? val.trim() : val);
+		winners(entry: { winnerNames?: string[] }): string {
+			if (!entry.winnerNames || entry.winnerNames.length === 0) {
+				return 'No winner yet';
+			}
+			return entry.winnerNames.join(' + ');
 		},
 	},
 });
@@ -156,6 +170,50 @@ export default defineComponent({
 .menu {
 	width: 100%;
 	max-width: 340px;
+}
+
+.account-strip {
+	margin-bottom: 10px;
+}
+
+.account-chip {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px;
+	background: var(--grey1);
+	border: 2px solid var(--grey3);
+	clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+}
+
+.account-avatar {
+	width: 36px;
+	height: 36px;
+	border: 2px solid var(--artist4);
+	background: var(--grey2);
+	object-fit: cover;
+	flex-shrink: 0;
+}
+
+.account-copy {
+	min-width: 0;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	font-family: var(--display-font);
+}
+
+.account-copy strong {
+	color: var(--grey7);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.mini-btn {
+	padding: 7px 8px;
+	font-size: 12px;
+	flex-shrink: 0;
 }
 
 /* P5 command tiles */
@@ -230,6 +288,73 @@ export default defineComponent({
 	display: flex;
 	gap: 20px;
 	justify-content: center;
+}
+
+.history-panel {
+	margin-top: 14px;
+}
+
+.p5-section-header {
+	font-family: var(--display-font);
+	font-size: 12px;
+	letter-spacing: 0.12em;
+	color: var(--artist4);
+	text-transform: uppercase;
+	padding-bottom: 5px;
+	border-bottom: 1px solid rgba(212, 255, 0, 0.2);
+	margin-bottom: 7px;
+}
+
+.history-muted {
+	margin: 0;
+	color: var(--grey5);
+	font-family: var(--display-font);
+	font-size: 14px;
+}
+
+.history-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.history-item {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 8px;
+	align-items: center;
+	padding: 7px 8px;
+	background: var(--grey1);
+	border-left: 3px solid var(--artist4);
+	font-family: var(--display-font);
+	color: var(--grey7);
+}
+
+.history-room,
+.history-mode {
+	color: var(--artist4);
+	font-size: 12px;
+	text-transform: uppercase;
+}
+
+.history-winners {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.menu-meta {
+	margin: 0 0 12px;
+	font-family: var(--display-font);
+	font-size: 14px;
+	color: var(--grey5);
+}
+
+.menu-meta strong {
+	color: var(--artist4);
 }
 
 .p5-nav-item {

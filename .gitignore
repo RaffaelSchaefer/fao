@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 .vscode/
 .env
+.env.coolify
 *.log
 *.bundle.*
 *.min.*

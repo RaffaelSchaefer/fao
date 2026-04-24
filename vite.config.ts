@@ -19,6 +19,12 @@ export default defineConfig({
 		port: 5173,
 		strictPort: true,
 		proxy: {
+			'/api/auth': {
+				target: 'http://localhost:3000',
+			},
+			'/api/me': {
+				target: 'http://localhost:3000',
+			},
 			'/socket.io': {
 				target: 'http://localhost:3000',
 				ws: true,

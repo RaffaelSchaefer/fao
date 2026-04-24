@@ -13,6 +13,8 @@
 		"build": "tsc -p tsconfig.server.json && vp build && npm run build:runtime-assets",
 		"build:runtime-assets": "mkdir -p dist/server/prompts && cp src/server/prompts/prompts.csv dist/server/prompts/prompts.csv",
 		"build:server": "tsc -p tsconfig.server.json",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
 		"start": "node ./dist/server/server.js",
 		"test": "vp test && playwright test",
 		"test:e2e": "playwright test",
@@ -22,11 +24,17 @@
 	"author": "Gideon W",
 	"license": "ISC",
 	"dependencies": {
+		"@better-auth/drizzle-adapter": "^1.6.5",
+		"@opentelemetry/api": "^1.9.1",
 		"ajv": "^6.10.0",
+		"better-auth": "^1.6.5",
 		"compression": "^1.7.4",
 		"csv-parse": "^6.1.0",
+		"dotenv": "^17.4.2",
+		"drizzle-orm": "^0.45.2",
 		"express": "^4.16.3",
 		"lodash": "^4.17.21",
+		"pg": "^8.20.0",
 		"socket.io": "^4.8.1"
 	},
 	"devDependencies": {
@@ -34,20 +42,20 @@
 		"@tailwindcss/vite": "^4.2.2",
 		"@types/express": "^5.0.0",
 		"@types/node": "^22.13.10",
+		"@types/pg": "^8.20.0",
 		"@vitejs/plugin-vue": "^6.0.1",
 		"@voidzero-dev/vite-plus-core": "latest",
 		"concurrently": "^9.1.2",
+		"drizzle-kit": "^0.31.10",
 		"normalize.css": "^8.0.1",
 		"socket.io-client": "^4.8.1",
 		"tailwindcss": "^4.2.2",
 		"tsx": "^4.19.2",
 		"typescript": "^5.8.3",
+		"vite": "npm:@voidzero-dev/vite-plus-core@^0.1.18",
 		"vite-plus": "latest",
 		"vitest": "npm:@voidzero-dev/vite-plus-test@latest",
 		"vue": "^3.5.13",
 		"vue-tsc": "^2.2.8"
-	},
-	"overrides": {
-		"vite": "npm:@voidzero-dev/vite-plus-core@latest"
 	}
 }

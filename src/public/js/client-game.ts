@@ -1,7 +1,14 @@
 import * as Color from './player-colors.js';
 
-type ClientUser = { name: string; connected?: boolean };
+type ClientUser = { name: string; connected?: boolean; avatarUrl?: string; isGuest?: boolean };
 type ColorOrderKey = (typeof Color.ORDER)[number];
+type ClientCustomTopic = {
+	id: string;
+	authorName: string;
+	keyword?: string;
+	hint?: string;
+	redacted: boolean;
+};
 
 export interface ClientGameState {
 	roomCode: string | undefined;
@@ -17,12 +24,13 @@ export interface ClientGameState {
 	fakerName: string | undefined;
 	strokes: unknown[];
 	votes: Record<string, unknown>;
-	customTopics: Array<{ keyword: string; hint?: string }>;
+	customTopics: ClientCustomTopic[];
 	useCustomTopicsOnly: boolean;
 	roundResults: unknown[];
 	lastRoundResult: unknown | null;
 	gameMode: 'classic' | 'timed';
 	turnTimeRemaining: number;
+	lobbyCountdownRemaining: number | null;
 	getUsernames(): string[];
 	adoptJson(json: Partial<ClientGameState>): Partial<ClientGameState>;
 	getUserColor(username: string): string;
@@ -51,6 +59,7 @@ function generateClientGameState(): ClientGameState {
 		lastRoundResult: null,
 		gameMode: 'classic',
 		turnTimeRemaining: 15,
+		lobbyCountdownRemaining: null,
 
 		getUsernames(this: ClientGameState) {
 			return this.users.map((u) => u.name);

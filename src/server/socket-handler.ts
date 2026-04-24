@@ -2,13 +2,20 @@
 import GAME_PHASE from '../common/game-phase.js';
 import MESSAGE from '../common/message.js';
 import User from '../common/user.js';
+import { getAuthIdentity } from './auth-session.js';
 import debugLog from './debug-log.js';
 import GameError from './game-error.js';
 import GamePrecond from './game-precond.js';
 import { ClientAdapter } from './game-room.js';
+import { recordRoomHistory } from './game-history.js';
 import * as Lobby from './lobby.js';
 import * as Schema from './schema.js';
 function handleSockets(io) {
+	io.use(async (sock, next) => {
+		sock.authIdentity = await getAuthIdentity(sock.handshake.headers);
+		next();
+	});
+
 	io.on('connection', function(sock) {
 		debugLog('Socket connected: ' + sock.id);
 		Object.keys(MessageHandlers).forEach((messageName) => {
@@ -40,11 +47,7 @@ const MessageHandlers = {
 		let newRoom = Lobby.createRoom();
 
 		joinRoom(user, newRoom, false, true);
-
-		io.in(newRoom.roomCode).emit(MESSAGE.CREATE_ROOM, {
-			username: user.name,
-			roomState: ClientAdapter.generateStateJson(newRoom),
-		});
+		broadcastRoomState(io, newRoom, MESSAGE.CREATE_ROOM);
 	},
 
 	[MESSAGE.JOIN_ROOM](io, sock, data) {
@@ -54,23 +57,40 @@ const MessageHandlers = {
 		GamePrecond.roomExists(data.roomCode);
 
 		let user;
-		const nameExistsInRoom = roomToJoin.findUser(data.username) !== undefined;
+		const existingByName = roomToJoin.findUser(data.username);
+		const existingByAuth = sock.authIdentity?.authUserId
+			? roomToJoin.findUserByAuthId(sock.authIdentity.authUserId)
+			: undefined;
+		const rejoinTarget = existingByAuth || existingByName;
 
-		if (nameExistsInRoom) {
+		if (rejoinTarget) {
 			// rejoin
-			GamePrecond.nameIsTakenInRoom(data.username, roomToJoin);
+			if (existingByName && existingByName !== rejoinTarget) {
+				GamePrecond.nameIsNotTakenInRoom(data.username, roomToJoin);
+			}
 			GamePrecond.gameInProgress(roomToJoin);
-			user = login(sock, data.username, roomToJoin);
+			user = login(sock, rejoinTarget.name, roomToJoin);
 			joinRoom(user, roomToJoin, true, false);
 		} else {
 			// join for first time
 			GamePrecond.roomIsNotFull(roomToJoin);
 			GamePrecond.gameNotInProgress(roomToJoin);
+			if (roomToJoin.isLobbyCountdownActive()) {
+				sock.emit(MESSAGE.JOIN_ROOM, { err: 'Game is starting' });
+				return;
+			}
 			GamePrecond.nameIsNotTakenInRoom(data.username, roomToJoin);
 			user = login(sock, data.username);
 			joinRoom(user, roomToJoin, false, false);
 		}
 		broadcastRoomState(io, roomToJoin, MESSAGE.JOIN_ROOM);
+		if (!rejoinTarget && roomToJoin.phase === GAME_PHASE.SETUP) {
+			broadcastLobbyActivity(io, roomToJoin, {
+				kind: 'join',
+				username: user.name,
+				text: 'joined the lobby',
+			});
+		}
 	},
 
 	[MESSAGE.LEAVE_ROOM](io, sock, data) {
@@ -86,6 +106,13 @@ const MessageHandlers = {
 			res.username = user.name;
 			return res;
 		});
+		if (room.phase === GAME_PHASE.SETUP) {
+			broadcastLobbyActivity(io, room, {
+				kind: 'leave',
+				username: user.name,
+				text: 'left the lobby',
+			});
+		}
 	},
 
 	[MESSAGE.START_GAME](io, sock, data) {
@@ -101,8 +128,27 @@ const MessageHandlers = {
 			sock.emit(MESSAGE.START_GAME, { err: 'Only the host can start the game' });
 			return;
 		}
-		rm.startNewRound(io, () => broadcastRoomState(io, rm, MESSAGE.NEW_TURN));
-		broadcastRoomState(io, rm, MESSAGE.START_GAME);
+		if (rm.isLobbyCountdownActive()) {
+			sock.emit(MESSAGE.START_GAME, { err: 'Game is already starting' });
+			return;
+		}
+		rm.startLobbyCountdown(
+			io,
+			() => broadcastRoomState(io, rm, MESSAGE.LOBBY_COUNTDOWN_UPDATE),
+			() => {
+				broadcastLobbyActivity(io, rm, {
+					kind: 'countdown',
+					username: sock.user.name,
+					text: 'started the game',
+				});
+				broadcastRoomState(io, rm, MESSAGE.START_GAME);
+			}
+		);
+		broadcastLobbyActivity(io, rm, {
+			kind: 'countdown',
+			username: sock.user.name,
+			text: 'started the countdown',
+		});
 	},
 	[MESSAGE.NEXT_ROUND](io, sock, data) {
 		GamePrecond.sockHasUser(sock);
@@ -134,6 +180,10 @@ const MessageHandlers = {
 			sock.emit(MESSAGE.SET_GAME_MODE, { err: 'Only the host can change game mode' });
 			return;
 		}
+		if (rm.isLobbyCountdownActive()) {
+			sock.emit(MESSAGE.SET_GAME_MODE, { err: 'Cannot change game mode during countdown' });
+			return;
+		}
 		rm.setGameMode(data.mode, io);
 		broadcastRoomState(io, rm, MESSAGE.SET_GAME_MODE);
 	},
@@ -142,6 +192,7 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
+		void recordRoomHistory(rm, 'finished');
 		rm.invokeSetup();
 		broadcastRoomState(io, rm, MESSAGE.RETURN_TO_SETUP);
 	},
@@ -168,6 +219,7 @@ const MessageHandlers = {
 		// When everyone has voted, calculate scores and transition
 		if (rm.allVotesIn()) {
 			let result = rm.calculateScores();
+			void recordRoomHistory(rm, 'in_progress');
 			broadcastRoomState(io, rm, MESSAGE.VOTE_RESULT, (res) => {
 				res.roundResult = result;
 				return res;
@@ -179,24 +231,47 @@ const MessageHandlers = {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
-		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
-			sock.emit(MESSAGE.ADD_CUSTOM_TOPIC, { err: 'Only the host can add topics' });
+		if (rm.phase !== GAME_PHASE.SETUP || rm.isLobbyCountdownActive()) {
+			sock.emit(MESSAGE.ADD_CUSTOM_TOPIC, { err: 'Topics can only be changed in the lobby' });
 			return;
 		}
-		rm.addCustomTopic(data.keyword, data.hint);
+		rm.addCustomTopic({
+			authorName: sock.user.name,
+			keyword: data.keyword,
+			hint: data.hint,
+		});
 		broadcastRoomState(io, rm, MESSAGE.ADD_CUSTOM_TOPIC);
+		broadcastLobbyActivity(io, rm, {
+			kind: 'topic',
+			username: sock.user.name,
+			text: 'added a topic',
+		});
 	},
 
 	[MESSAGE.REMOVE_CUSTOM_TOPIC](io, sock, data) {
 		GamePrecond.sockHasUser(sock);
 		GamePrecond.userIsInARoom(sock.user);
 		let rm = sock.user.gameRoom;
-		if (!(rm.host && rm.host.name === sock.user.name && rm.host.socket === sock)) {
-			sock.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, { err: 'Only the host can remove topics' });
+		if (rm.phase !== GAME_PHASE.SETUP || rm.isLobbyCountdownActive()) {
+			sock.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, { err: 'Topics can only be changed in the lobby' });
 			return;
 		}
-		rm.removeCustomTopic(data.index);
+		const topic = rm.findCustomTopic(data.topicId);
+		if (!topic) {
+			sock.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, { err: 'Topic not found' });
+			return;
+		}
+		if (topic.authorName !== sock.user.name) {
+			sock.emit(MESSAGE.REMOVE_CUSTOM_TOPIC, { err: 'Only the author can remove this topic' });
+			return;
+		}
+		rm.removeCustomTopic(data.topicId);
 		broadcastRoomState(io, rm, MESSAGE.REMOVE_CUSTOM_TOPIC);
+		broadcastLobbyActivity(io, rm, {
+			kind: 'topic',
+			username: sock.user.name,
+			text: 'removed a topic',
+		});
 	},
 
 	[MESSAGE.TOGGLE_CUSTOM_TOPICS](io, sock, data) {
@@ -207,8 +282,33 @@ const MessageHandlers = {
 			sock.emit(MESSAGE.TOGGLE_CUSTOM_TOPICS, { err: 'Only the host can toggle topics' });
 			return;
 		}
+		if (rm.isLobbyCountdownActive()) {
+			sock.emit(MESSAGE.TOGGLE_CUSTOM_TOPICS, {
+				err: 'Cannot change topic settings during countdown',
+			});
+			return;
+		}
 		rm.useCustomTopicsOnly = data.customOnly;
 		broadcastRoomState(io, rm, MESSAGE.TOGGLE_CUSTOM_TOPICS);
+	},
+
+	[MESSAGE.LOBBY_EMOTE](io, sock, data) {
+		GamePrecond.sockHasUser(sock);
+		GamePrecond.userIsInARoom(sock.user);
+		let rm = sock.user.gameRoom;
+		if (rm.phase !== GAME_PHASE.SETUP) {
+			sock.emit(MESSAGE.LOBBY_EMOTE, { err: 'Emotes are only available in the lobby' });
+			return;
+		}
+		io.in(rm.roomCode).emit(MESSAGE.LOBBY_EMOTE, {
+			username: sock.user.name,
+			emoji: data.emoji,
+		});
+		broadcastLobbyActivity(io, rm, {
+			kind: 'emote',
+			username: sock.user.name,
+			text: `reacted ${data.emoji}`,
+		});
 	},
 
 	disconnect(io, sock, data) {
@@ -222,6 +322,13 @@ const MessageHandlers = {
 					res.username = user.name;
 					return res;
 				});
+				if (room.phase === GAME_PHASE.SETUP) {
+					broadcastLobbyActivity(io, room, {
+						kind: 'leave',
+						username: user.name,
+						text: 'left the lobby',
+					});
+				}
 			}
 		}
 	},
@@ -235,7 +342,7 @@ function login(sock, username, roomToRejoin) {
 		user = roomToRejoin.findUser(username);
 		user.socket = sock;
 	} else {
-		user = new User(sock, username);
+		user = new User(sock, username, sock.authIdentity);
 	}
 	sock.user = user;
 	debugLog(`Login: ${user.logName}`);
@@ -259,6 +366,7 @@ function logout(sock) {
 			}
 			if (room.isDead()) {
 				console.log(`Rm${room.roomCode} Triggering delayed room teardown`);
+				void recordRoomHistory(room, 'finished');
 				Lobby.triggerDelayedRoomTeardown(room);
 			}
 		}
@@ -280,21 +388,6 @@ function joinRoom(user, room, rejoin, isHost = false) {
 
 // send roomstate update to all users, accounting for different roles (i.e., faker vs artist)
 function broadcastRoomState(io, room, messageName, addtlProcessFn) {
-	let state = ClientAdapter.generateStateJson(room);
-	if (addtlProcessFn) {
-		state = addtlProcessFn(state);
-	}
-
-	if (room.phase === GAME_PHASE.SETUP) {
-		io.in(room.roomCode).emit(messageName, {
-			roomState: state,
-		});
-		return;
-	}
-
-	let artistView = ClientAdapter.hideFaker(state);
-	let fakerView = ClientAdapter.hideKeyword(state);
-
 	for (let u of room.users) {
 		let s = u.socket;
 		if (u.socket === undefined) {
@@ -302,8 +395,14 @@ function broadcastRoomState(io, room, messageName, addtlProcessFn) {
 			continue;
 		}
 
+		let state = ClientAdapter.generateStateJson(room, undefined, u.name);
+		if (addtlProcessFn) {
+			state = addtlProcessFn(state);
+		}
 		let res;
 		if (room.phase === GAME_PHASE.PLAY || room.phase === GAME_PHASE.VOTE) {
+			let artistView = ClientAdapter.hideFaker(state);
+			let fakerView = ClientAdapter.hideKeyword(state);
 			res = {
 				roomState: room.faker && room.faker.name === u.name ? fakerView : artistView,
 			};
@@ -315,6 +414,10 @@ function broadcastRoomState(io, room, messageName, addtlProcessFn) {
 
 		s.emit(messageName, res);
 	}
+}
+
+function broadcastLobbyActivity(io, room, activity) {
+	io.in(room.roomCode).emit(MESSAGE.LOBBY_ACTIVITY, activity);
 }
 
 export default handleSockets;

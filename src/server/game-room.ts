@@ -7,6 +7,12 @@ import * as Util from '../common/util.js';
 import * as Prompts from './prompts/prompts-api.js';
 
 const MAX_USERS = 10;
+const LOBBY_COUNTDOWN_START = 3;
+const LOBBY_COUNTDOWN_INTERVAL_MS = 1000;
+
+function createTopicId() {
+	return Math.random().toString(36).slice(2, 10);
+}
 
 class GameRoom {
 	constructor(roomCode, host) {
@@ -37,8 +43,13 @@ class GameRoom {
 		this.gameMode = 'classic';
 		this.turnTimer = null;
 		this.turnTimeRemaining = 15;
+
+		// Setup countdown
+		this.lobbyCountdownRemaining = null;
+		this.lobbyCountdownTimer = null;
 	}
 	addUser(user, isHost = false) {
+		this.cancelLobbyCountdown();
 		if (this.isFull()) {
 			console.warn('Full room');
 			return false;
@@ -50,6 +61,7 @@ class GameRoom {
 		return true;
 	}
 	readdUser(user) {
+		this.cancelLobbyCountdown();
 		let userTargetIdx = this.users.findIndex((u) => u.name === user.name);
 		if (userTargetIdx !== -1) {
 			this.users[userTargetIdx] = user;
@@ -61,6 +73,7 @@ class GameRoom {
 		}
 	}
 	dropUser(user) {
+		this.cancelLobbyCountdown();
 		let idx = this.users.indexOf(user);
 		if (idx === -1) {
 			return this.users.length;
@@ -89,7 +102,12 @@ class GameRoom {
 		return this.users.find((p) => p.name === name);
 	}
 
+	findUserByAuthId(authUserId) {
+		return this.users.find((p) => p.authUserId && p.authUserId === authUserId);
+	}
+
 	startNewRound(io, callback) {
+		this.cancelLobbyCountdown();
 		this.round++;
 		this.shuffleUsers();
 		this.phase = GAME_PHASE.PLAY;
@@ -107,6 +125,7 @@ class GameRoom {
 	}
 	invokeSetup() {
 		this.stopTimedTurn();
+		this.cancelLobbyCountdown();
 		console.log(`Rm${this.roomCode} Force setup`);
 		this.phase = GAME_PHASE.SETUP;
 		// Reset game state
@@ -190,6 +209,43 @@ class GameRoom {
 			clearInterval(this.turnTimer);
 			this.turnTimer = null;
 		}
+	}
+	startLobbyCountdown(io, onTick, onComplete) {
+		this.cancelLobbyCountdown();
+		this.lobbyCountdownRemaining = LOBBY_COUNTDOWN_START;
+		if (onTick) {
+			onTick();
+		}
+		this.lobbyCountdownTimer = setInterval(() => {
+			if (this.lobbyCountdownRemaining === null) {
+				return;
+			}
+			this.lobbyCountdownRemaining--;
+			if (this.lobbyCountdownRemaining > 0) {
+				if (onTick) {
+					onTick();
+				}
+				return;
+			}
+			this.cancelLobbyCountdown();
+			if (onTick) {
+				onTick();
+			}
+			this.startNewRound(io, onComplete);
+			if (onComplete) {
+				onComplete();
+			}
+		}, LOBBY_COUNTDOWN_INTERVAL_MS);
+	}
+	cancelLobbyCountdown() {
+		if (this.lobbyCountdownTimer) {
+			clearInterval(this.lobbyCountdownTimer);
+			this.lobbyCountdownTimer = null;
+		}
+		this.lobbyCountdownRemaining = null;
+	}
+	isLobbyCountdownActive() {
+		return this.lobbyCountdownRemaining !== null;
 	}
 	setGameMode(mode, io) {
 		this.gameMode = mode;
@@ -318,26 +374,49 @@ class GameRoom {
 		return roundResult;
 	}
 
-	addCustomTopic(keyword, hint) {
-		this.customTopics.push({ keyword, hint });
-		return this.customTopics;
+	addCustomTopic({ authorName, keyword, hint }) {
+		const topic = {
+			id: createTopicId(),
+			authorName,
+			keyword,
+			hint: hint || '',
+		};
+		this.customTopics.push(topic);
+		return topic;
 	}
 
-	removeCustomTopic(index) {
-		if (index >= 0 && index < this.customTopics.length) {
-			this.customTopics.splice(index, 1);
+	removeCustomTopic(topicId) {
+		const index = this.customTopics.findIndex((topic) => topic.id === topicId);
+		if (index === -1) {
+			return undefined;
 		}
-		return this.customTopics;
+		const [removedTopic] = this.customTopics.splice(index, 1);
+		return removedTopic;
+	}
+
+	findCustomTopic(topicId) {
+		return this.customTopics.find((topic) => topic.id === topicId);
 	}
 }
 
 const ClientAdapter = {
-	generateStateJson(gameRoom, pickFields) {
+	generateStateJson(gameRoom, pickFields, viewerName) {
 		// Build per-user score map
 		let scores = {};
 		for (let u of gameRoom.users) {
 			scores[u.name] = gameRoom.scores[u.name] || 0;
 		}
+
+		const visibleTopics = gameRoom.customTopics.map((topic) => {
+			const isViewerTopic = viewerName && topic.authorName === viewerName;
+			return {
+				id: topic.id,
+				authorName: topic.authorName,
+				keyword: isViewerTopic ? topic.keyword : undefined,
+				hint: isViewerTopic ? topic.hint : undefined,
+				redacted: !isViewerTopic,
+			};
+		});
 
 		let res = {
 			roomCode: gameRoom.roomCode,
@@ -345,6 +424,8 @@ const ClientAdapter = {
 			users: _.map(gameRoom.users, (u) => ({
 				name: u.name,
 				connected: u.connected,
+				avatarUrl: u.avatarUrl,
+				isGuest: u.isGuest,
 			})),
 			scores: scores,
 			round: gameRoom.round,
@@ -356,11 +437,12 @@ const ClientAdapter = {
 			fakerName: gameRoom.faker ? gameRoom.faker.name : undefined,
 			strokes: gameRoom.strokes,
 			votes: _.clone(gameRoom.votes),
-			customTopics: gameRoom.customTopics,
+			customTopics: visibleTopics,
 			useCustomTopicsOnly: gameRoom.useCustomTopicsOnly,
 			roundResults: gameRoom.roundResults,
 			gameMode: gameRoom.gameMode,
 			turnTimeRemaining: gameRoom.turnTimeRemaining,
+			lobbyCountdownRemaining: gameRoom.lobbyCountdownRemaining,
 		};
 		if (pickFields) {
 			res = _.pick(res, pickFields);

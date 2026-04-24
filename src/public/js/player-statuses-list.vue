@@ -20,6 +20,7 @@
 			<span :style="{ color: color(u), fontWeight: isMyTurn(u) ? 'bold' : 'normal' }">{{
 				u.name
 			}}</span>
+			<img v-if="u.avatarUrl" class="status-avatar" :src="u.avatarUrl" alt="" />
 		</li>
 	</ul>
 </template>
@@ -31,6 +32,7 @@ import Store from './state.js';
 type PlayerStatus = {
 	name: string;
 	connected?: boolean;
+	avatarUrl?: string;
 };
 
 export default defineComponent({
@@ -51,3 +53,13 @@ export default defineComponent({
 	},
 });
 </script>
+
+<style scoped>
+.status-avatar {
+	width: 20px;
+	height: 20px;
+	border: 1px solid var(--grey3);
+	background: var(--grey2);
+	object-fit: cover;
+}
+</style>

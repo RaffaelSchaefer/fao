@@ -106,12 +106,12 @@ SCHEMA[MESSAGE.ADD_CUSTOM_TOPIC] = {
 SCHEMA[MESSAGE.REMOVE_CUSTOM_TOPIC] = {
 	$id: MESSAGE.REMOVE_CUSTOM_TOPIC,
 	properties: {
-		index: {
-			type: 'integer',
-			minimum: 0,
+		topicId: {
+			type: 'string',
+			minLength: 1,
 		},
 	},
-	required: ['index'],
+	required: ['topicId'],
 };
 SCHEMA[MESSAGE.TOGGLE_CUSTOM_TOPICS] = {
 	$id: MESSAGE.TOGGLE_CUSTOM_TOPICS,
@@ -131,6 +131,17 @@ SCHEMA[MESSAGE.SET_GAME_MODE] = {
 		},
 	},
 	required: ['mode'],
+};
+SCHEMA[MESSAGE.LOBBY_EMOTE] = {
+	$id: MESSAGE.LOBBY_EMOTE,
+	properties: {
+		emoji: {
+			type: 'string',
+			minLength: 1,
+			maxLength: 8,
+		},
+	},
+	required: ['emoji'],
 };
 
 for (const schema of Object.values(SCHEMA)) {

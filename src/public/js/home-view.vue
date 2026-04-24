@@ -1,5 +1,6 @@
 <template>
 	<div id="home" class="view relative z-10">
+		<AuthGate />
 		<div class="view-container mx-auto w-full max-w-3xl px-4">
 			<div id="title-banner" class="stripe align-center">
 				<div class="stripe-content">
@@ -34,11 +35,13 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import HomeMenu from './home-menu.vue';
+import AuthGate from './auth-gate.vue';
 
 export default defineComponent({
 	name: 'HomeView',
 	components: {
 		HomeMenu,
+		AuthGate,
 	},
 });
 </script>
